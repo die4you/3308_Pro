@@ -1,0 +1,37 @@
+## Visual Studio / .NET
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Build Output & Artifacts
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+*.pdb
+
+## Dağıtım Paketleri & Kurulum Çıktıları (Büyük ikili dosyalar)
+Dagitim_Paketi/
+*.exe
+*.msi
+*.zip
+
+## SQLite Veritabanı Dosyaları (Kullanıcı / Test verileri)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+Data/*.db
+
+## Geçici ve Log Dosyaları
+*.log
+*.tmp
+TestResults/
+.system_generated/
+scratch/

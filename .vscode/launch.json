@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "MEB Koordinatörlük Sistemi (Çalıştır)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/MebKoordinatorluk.UI/bin/Debug/net9.0-windows/MebKoordinatorluk.UI.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/src/MebKoordinatorluk.UI",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    }
+  ]
+}
