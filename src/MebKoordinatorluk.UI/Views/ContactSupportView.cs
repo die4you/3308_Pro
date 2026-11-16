@@ -747,26 +747,55 @@ public class ContactSupportView : UserControl
         dlg.ShowDialog(this);
     }
 
-    private void BtnCheckUpdates_Click(object? sender, EventArgs e)
+    private async void BtnCheckUpdates_Click(object? sender, EventArgs e)
     {
         _btnCheckUpdates.Enabled = false;
         _btnCheckUpdates.Text = "⏳ Denetleniyor...";
 
-        var timer = new System.Windows.Forms.Timer { Interval = 700 };
-        timer.Tick += (s, args) =>
+        var updateService = new MebKoordinatorluk.Core.Services.GitHubUpdateService();
+
+        try
         {
-            timer.Stop();
-            timer.Dispose();
+            var result = await updateService.CheckForUpdatesAsync();
+
             _btnCheckUpdates.Enabled = true;
             _btnCheckUpdates.Text = "🔄 Güncellemeleri Denetle";
-            _lblUpdateStatus.Text = $"Son kontrol: {DateTime.Now:HH:mm} (Yazılımınız en güncel sürümdedir: v2.4)";
-            MessageBox.Show(
-                "3308 Pro şu anda en güncel sürümündedir (v2.4).\n\nYeni bir güncelleme yayınlandığında sistem sizi otomatik olarak bilgilendirecektir.",
-                "Yazılım Güncel — 3308 Pro",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-        };
-        timer.Start();
+
+            if (result.Success)
+            {
+                if (result.IsUpdateAvailable)
+                {
+                    _lblUpdateStatus.Text = $"Son kontrol: {DateTime.Now:HH:mm} (Yeni sürüm mevcut: v{result.LatestVersion})";
+                    using var dlg = new MebKoordinatorluk.UI.Dialogs.UpdateAvailableDialog(result, updateService);
+                    dlg.ShowDialog(this);
+                }
+                else
+                {
+                    _lblUpdateStatus.Text = $"Son kontrol: {DateTime.Now:HH:mm} (Yazılımınız en güncel sürümdedir: v{result.CurrentVersion})";
+                    MessageBox.Show(
+                        $"3308 Pro şu anda en güncel sürümündedir (v{result.CurrentVersion}).\n\nYeni bir güncelleme yayınlandığında sistem sizi otomatik olarak bilgilendirecektir.",
+                        "Yazılım Güncel — 3308 Pro",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+            }
+            else
+            {
+                _lblUpdateStatus.Text = $"Son kontrol: {DateTime.Now:HH:mm} (Sunucuya bağlanılamadı)";
+                MessageBox.Show(
+                    $"Güncelleme sunucusuna bağlanılamadı:\n{result.ErrorMessage}\n\nİnternet bağlantınızı kontrol ediniz.",
+                    "Güncelleme Kontrolü",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            _btnCheckUpdates.Enabled = true;
+            _btnCheckUpdates.Text = "🔄 Güncellemeleri Denetle";
+            _lblUpdateStatus.Text = $"Son kontrol: {DateTime.Now:HH:mm} (Hata oluştu)";
+            MessageBox.Show($"Güncelleme kontrolü sırasında beklenmeyen hata oluştu:\n{ex.Message}", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void CopyToClipboard(string text, string successMessage)
