@@ -7,6 +7,7 @@ public class UpdateAvailableDialog : Form
 {
     private readonly UpdateCheckResult _updateInfo;
     private readonly GitHubUpdateService _updateService;
+    private readonly bool _isLicensed;
 
     private ProgressBar _progressBar = null!;
     private Label _lblDownloadProgress = null!;
@@ -15,10 +16,11 @@ public class UpdateAvailableDialog : Form
     private Button _btnLater = null!;
     private CancellationTokenSource? _cts;
 
-    public UpdateAvailableDialog(UpdateCheckResult updateInfo, GitHubUpdateService updateService)
+    public UpdateAvailableDialog(UpdateCheckResult updateInfo, GitHubUpdateService updateService, bool isLicensed = true)
     {
         _updateInfo = updateInfo;
         _updateService = updateService;
+        _isLicensed = isLicensed;
 
         InitializeComponent();
     }
@@ -54,7 +56,9 @@ public class UpdateAvailableDialog : Form
 
         var lblHeaderSub = new Label
         {
-            Text = $"3308 Pro'nun en yeni sürümünü tek tıkla indirip otomatik kurabilirsiniz.",
+            Text = _isLicensed
+                ? "3308 Pro'nun en yeni sürümünü tek tıkla indirip otomatik kurabilirsiniz."
+                : "Yeni sürüm güncellemeleri yalnızca aktif lisansı bulunan kurumlara açıktır.",
             Font = new Font("Segoe UI", 9f),
             ForeColor = Color.FromArgb(219, 234, 254),
             Location = new Point(22, 46),
@@ -147,14 +151,15 @@ public class UpdateAvailableDialog : Form
 
         _btnInstall = new Button
         {
-            Text = "🚀 Şimdi İndir ve Güncelle",
-            Location = new Point(340, 14),
-            Size = new Size(240, 38),
-            BackColor = Color.FromArgb(37, 99, 235), // Royal Blue
+            Text = _isLicensed ? "🚀 Şimdi İndir ve Güncelle" : "🔒 Güncelleme İçin Lisans Gerekli",
+            Location = new Point(320, 14),
+            Size = new Size(260, 38),
+            BackColor = _isLicensed ? Color.FromArgb(37, 99, 235) : Color.FromArgb(148, 163, 184),
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
-            Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-            Cursor = Cursors.Hand
+            Font = new Font("Segoe UI", 9f, FontStyle.Bold),
+            Cursor = _isLicensed ? Cursors.Hand : Cursors.Default,
+            Enabled = _isLicensed
         };
         _btnInstall.FlatAppearance.BorderSize = 0;
         _btnInstall.Click += async (s, e) => await StartDownloadAndInstallAsync();
@@ -162,7 +167,7 @@ public class UpdateAvailableDialog : Form
         _btnWeb = new Button
         {
             Text = "🌐 GitHub'da Gör",
-            Location = new Point(190, 14),
+            Location = new Point(170, 14),
             Size = new Size(140, 38),
             BackColor = Color.FromArgb(241, 245, 249),
             ForeColor = Color.FromArgb(30, 41, 59),
@@ -210,13 +215,22 @@ public class UpdateAvailableDialog : Form
 
     private async Task StartDownloadAndInstallAsync()
     {
+        if (!_isLicensed)
+        {
+            MessageBox.Show(
+                "Yeni sürümleri indirip kurabilmek için 3308 Pro yazılım lisansınızın aktif olması gerekmektedir.\n\nLütfen lisansınızı etkinleştiriniz.",
+                "Lisans Gerekli — 3308 Pro",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(_updateInfo.DownloadUrl))
         {
             MessageBox.Show("Güncelleme indirme bağlantısı bulunamadı.", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
-        // Eğer .exe asset değil de web sayfasıysa tarayıcıda aç
         if (!_updateInfo.DownloadUrl.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
         {
             Process.Start(new ProcessStartInfo(_updateInfo.DownloadUrl) { UseShellExecute = true });
@@ -247,7 +261,6 @@ public class UpdateAvailableDialog : Form
             _lblDownloadProgress.Text = "✓ İndirme tamamlandı! Kurulum başlatılıyor...";
             await Task.Delay(800);
 
-            // Inno Setup kurulum sihirbazını başlat ve programı kapat
             var psi = new ProcessStartInfo
             {
                 FileName = downloadedFile,
@@ -261,14 +274,14 @@ public class UpdateAvailableDialog : Form
         {
             _progressBar.Visible = false;
             _lblDownloadProgress.Text = "İndirme iptal edildi.";
-            _btnInstall.Enabled = true;
+            _btnInstall.Enabled = _isLicensed;
             _btnLater.Text = "Daha Sonra";
         }
         catch (Exception ex)
         {
             _progressBar.Visible = false;
             _lblDownloadProgress.Text = "İndirme başarısız.";
-            _btnInstall.Enabled = true;
+            _btnInstall.Enabled = _isLicensed;
             _btnLater.Text = "Kapat";
             MessageBox.Show($"Güncelleme indirilemedi:\n{ex.Message}", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }

@@ -749,6 +749,19 @@ public class ContactSupportView : UserControl
 
     private async void BtnCheckUpdates_Click(object? sender, EventArgs e)
     {
+        // 🔒 Güncelleme Lisans Kısıtlaması: Yalnızca geçerli ve aktif tam sürüm lisansı olanlar güncelleme alabilir!
+        if (!_licenseInfo.IsActive)
+        {
+            MessageBox.Show(
+                "3308 Pro Güncelleme Kısıtlaması:\n\n" +
+                "Yazılım güncellemeleri, mevzuat değişiklikleri ve yeni sürüm özellikleri yalnızca aktif lisansı bulunan kurumlara sunulmaktadır.\n\n" +
+                "En yeni sürüme geçmek ve güncellemelerden yararlanabilmek için lütfen yazılım lisansınızı etkinleştiriniz veya geliştirici ile iletişime geçiniz.",
+                "Lisans Gerekli — 3308 Pro",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
         _btnCheckUpdates.Enabled = false;
         _btnCheckUpdates.Text = "⏳ Denetleniyor...";
 
@@ -766,7 +779,7 @@ public class ContactSupportView : UserControl
                 if (result.IsUpdateAvailable)
                 {
                     _lblUpdateStatus.Text = $"Son kontrol: {DateTime.Now:HH:mm} (Yeni sürüm mevcut: v{result.LatestVersion})";
-                    using var dlg = new MebKoordinatorluk.UI.Dialogs.UpdateAvailableDialog(result, updateService);
+                    using var dlg = new MebKoordinatorluk.UI.Dialogs.UpdateAvailableDialog(result, updateService, _licenseInfo.IsActive);
                     dlg.ShowDialog(this);
                 }
                 else
