@@ -292,7 +292,7 @@ public class ContactSupportView : UserControl
         flp.Controls.Add(CreateFieldHeader("Program Sürümü:"));
         var lblVersion = new Label
         {
-            Text = "3308 Pro v2.4 (Bağımsız x64 Sürüm)",
+            Text = "3308 Pro v2.5 (Bağımsız x64 Sürüm)",
             Font = new Font("Segoe UI", 9f, FontStyle.Bold),
             ForeColor = UITheme.TextPrimary,
             AutoSize = true,
@@ -704,7 +704,7 @@ public class ContactSupportView : UserControl
                 $"Okul / Kurum: {school}\n" +
                 $"İl / İlçe: {city}\n" +
                 $"Makine Kodu (HWID): {hwid}\n" +
-                $"Sürüm: 3308 Pro v2.4\n" +
+                $"Sürüm: 3308 Pro v2.5\n" +
                 $"Lisans Durumu: {(_licenseInfo.IsActive ? "Tam Sürüm (Lisanslı)" : "Deneme Sürümü (Demo)")}\n" +
                 $"Konu: {subjectText}\n\n" +
                 $"Mesajım:\n{userMsg}\n\n" +
@@ -829,7 +829,7 @@ public class ContactSupportView : UserControl
                       $"İl / İlçe: {_lblCityVal.Text}\n" +
                       $"Makine Kodu (HWID): {_licenseService.MachineCode}\n" +
                       $"Lisans Durumu: {(_licenseInfo.IsActive ? $"Lisanslı (Bitiş: {_licenseInfo.EndDate:dd.MM.yyyy})" : "Deneme Sürümü (Demo)")}\n" +
-                      $"Sürüm: 3308 Pro v2.4\n" +
+                      $"Sürüm: 3308 Pro v2.5\n" +
                       $"Tarih: {DateTime.Now:dd.MM.yyyy HH:mm}";
 
         CopyToClipboard(info, "Tüm sistem ve lisans bilgileri panoya kopyalandı!\nE-posta veya WhatsApp üzerinden kolayca paylaşabilirsiniz.");

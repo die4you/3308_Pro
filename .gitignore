@@ -17,6 +17,7 @@ build/
 
 ## Dağıtım Paketleri & Kurulum Çıktıları (Büyük ikili dosyalar)
 Dagitim_Paketi/
+publish/
 *.exe
 *.msi
 *.zip
