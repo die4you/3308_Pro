@@ -468,6 +468,9 @@ public class TeachersView : UserControl
 
     private async void OpenTeacherDialog(Teacher? existing)
     {
+        if (existing == null && !Common.LicenseUIHelper.CanAddTeacher(_allTeachers.Count, this))
+            return;
+
         using var dlg = new TeacherEditDialog(_fieldRepo, existing);
         if (dlg.ShowDialog(this) == DialogResult.OK)
         {
@@ -495,6 +498,9 @@ public class TeachersView : UserControl
 
     private async void BtnUploadExcel_Click(object? sender, EventArgs e)
     {
+        if (!Common.LicenseUIHelper.CheckFeature("Excel'den Toplu Öğretmen Aktarımı", this))
+            return;
+
         using var ofd = new OpenFileDialog
         {
             Filter = "Excel ve CSV Dosyaları (*.xlsx;*.xls;*.csv)|*.xlsx;*.xls;*.csv|Excel Dosyaları (*.xlsx;*.xls)|*.xlsx;*.xls|CSV Dosyaları (*.csv)|*.csv|Tüm Dosyalar (*.*)|*.*",

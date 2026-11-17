@@ -1288,6 +1288,9 @@ public class DocumentsView : UserControl
 
     private void BtnExportExcel_Click(object? sender, EventArgs e)
     {
+        if (!Common.LicenseUIHelper.CheckFeature("Evrak Takip Çizelgesini Excel Olarak Dışa Aktarma", this))
+            return;
+
         using var sfd = new SaveFileDialog
         {
             Filter = "CSV Dosyası (*.csv)|*.csv",

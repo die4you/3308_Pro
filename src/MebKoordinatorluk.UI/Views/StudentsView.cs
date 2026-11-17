@@ -162,6 +162,7 @@ public class StudentsView : UserControl
         menuImport.Items.Add("📋 Metin Yapıştırarak Ekle", null, BtnBulkPaste_Click);
         menuImport.Items.Add("🆔 T.C. Kimlik No Aktar", null, (s, e) =>
         {
+            if (!Common.LicenseUIHelper.CheckFeature("e-Okul'dan T.C. Kimlik No Eşleştirme", this)) return;
             using var dlg = new EOkulTcImportDialog(_studentRepo);
             if (dlg.ShowDialog(this) == DialogResult.OK && dlg.ImportedCount > 0)
             {
@@ -170,6 +171,7 @@ public class StudentsView : UserControl
         });
         menuImport.Items.Add("💳 IBAN / Banka Bilgisi Aktar", null, (s, e) =>
         {
+            if (!Common.LicenseUIHelper.CheckFeature("Excel'den IBAN Eşleştirme", this)) return;
             using var dlg = new StudentIbanImportDialog(_studentRepo);
             if (dlg.ShowDialog(this) == DialogResult.OK && dlg.ImportedCount > 0)
             {
@@ -1411,15 +1413,8 @@ public class StudentsView : UserControl
 
     private void BtnBulkPaste_Click(object? sender, EventArgs e)
     {
-        if (_licenseService != null && !_licenseService.CanAddStudent(_allStudents.Count))
-        {
-            MessageBox.Show(
-                "3308 Pro Deneme Sürümü Kısıtlaması:\n\nDeneme sürümünde en fazla 5 öğrenci kaydedilebilir. Toplu aktarım yapabilmek için lütfen lisansınızı etkinleştiriniz.",
-                "Demo Sürüm Kısıtlaması",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
+        if (!Common.LicenseUIHelper.CheckFeature("Toplu Öğrenci Listesi Yapıştırma (e-Okul / Excel)", this))
             return;
-        }
 
         using var dlg = new BulkStudentsDialog(_studentRepo, _classRepo, _fieldRepo);
         if (dlg.ShowDialog() == DialogResult.OK && dlg.ImportedCount > 0)
@@ -1441,15 +1436,8 @@ public class StudentsView : UserControl
     }
     private async void BtnUploadExcel_Click(object? sender, EventArgs e)
     {
-        if (_licenseService != null && !_licenseService.CanAddStudent(_allStudents.Count))
-        {
-            MessageBox.Show(
-                "3308 Pro Deneme Sürümü Kısıtlaması:\n\nDeneme sürümünde en fazla 5 öğrenci kaydedilebilir. Excel'den içe aktarım yapabilmek için lütfen lisansınızı etkinleştiriniz.",
-                "Demo Sürüm Kısıtlaması",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
+        if (!Common.LicenseUIHelper.CheckFeature("e-Okul Sınıf Listesinden Toplu Öğrenci Aktarma", this))
             return;
-        }
 
         using var dlg = new Dialogs.EOkulImportDialog(_studentRepo, _classRepo, _fieldRepo);
         if (dlg.ShowDialog(this) == DialogResult.OK)

@@ -772,6 +772,9 @@ public class FeesView : UserControl
 
     private void BtnExportExcel_Click(object? sender, EventArgs e)
     {
+        if (!Common.LicenseUIHelper.CheckFeature("Katkı Payı Bordrosunu Excel Olarak Dışa Aktarma", this))
+            return;
+
         var selectedRows = _grid.Rows.Cast<DataGridViewRow>()
             .Where(r => r.Cells["colSelect"].Value is true)
             .ToList();

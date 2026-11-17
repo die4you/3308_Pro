@@ -30,6 +30,13 @@ static class Program
 
         var serviceProvider = services.BuildServiceProvider();
 
+        // Lisans UI Denetleyicisini Başlat
+        try
+        {
+            Common.LicenseUIHelper.LicenseService = serviceProvider.GetRequiredService<Core.Interfaces.ILicenseService>();
+        }
+        catch { }
+
         // 1. SQLite Veritabanını Başlat ve Şemaları Doğrula
         try
         {

@@ -570,15 +570,8 @@ public class EnterprisesView : UserControl
 
     private async void BtnUploadExcel_Click(object? sender, EventArgs e)
     {
-        if (_licenseService != null && !_licenseService.CanAddEnterprise(_allEnterprises.Count))
-        {
-            MessageBox.Show(
-                "3308 Pro Deneme Sürümü Kısıtlaması:\n\nDeneme sürümünde en fazla 3 işletme kaydedilebilir. Excel'den toplu işletme aktarımı yapabilmek için lütfen lisansınızı etkinleştiriniz.",
-                "Demo Sürüm Kısıtlaması",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Warning);
+        if (!Common.LicenseUIHelper.CheckFeature("Excel'den Toplu İşletme Aktarımı", this))
             return;
-        }
 
         using var ofd = new OpenFileDialog
         {

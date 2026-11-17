@@ -751,6 +751,9 @@ public class DistributionView : UserControl
 
     private void BtnAutoDistribute_Click(object? sender, EventArgs e)
     {
+        if (!Common.LicenseUIHelper.CheckFeature("⚡ Akıllı Otomatik Koordinatörlük Dağıtım Motoru", this))
+            return;
+
         if (_targetStudents.Count == 0)
         {
             MessageBox.Show("Seçilen filtre kriterlerine uygun öğrenci bulunamadı. Lütfen en az bir sınıf seviyesi veya eğitim türü seçiniz.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);

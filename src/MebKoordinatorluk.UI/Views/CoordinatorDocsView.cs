@@ -3049,6 +3049,9 @@ public class CoordinatorDocsView : UserControl
 
     private void BtnExportExcel_Click(object? sender, EventArgs e)
     {
+        if (!Common.LicenseUIHelper.CheckFeature("Koordinatörlük Evraklarını Excel Olarak Dışa Aktarma", this))
+            return;
+
         try
         {
             var available = GetAvailableEnterprises();

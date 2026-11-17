@@ -1029,6 +1029,9 @@ public class MainForm : Form
 
     private async void BtnExportEntireDbToExcel_Click(object? sender, EventArgs e)
     {
+        if (!Common.LicenseUIHelper.CheckFeature("Tüm Veritabanını Excel'e Aktarma", this))
+            return;
+
         // 1. KVKK ve Veri Güvenliği: Yönetici Şifre Doğrulaması
         using var authDlg = new AdminPasswordPromptDialog(_userRepo);
         if (authDlg.ShowDialog(this) != DialogResult.OK)
@@ -1388,9 +1391,9 @@ public class MainForm : Form
         }
         else
         {
-            _btnLicenseBadge.Text = "⚠️ Demo Sürüm (Kısıtlı)";
-            _btnLicenseBadge.BackColor = Color.FromArgb(217, 119, 6); // amber-600
-            _btnLicenseBadge.FlatAppearance.MouseOverBackColor = Color.FromArgb(180, 83, 9);
+            _btnLicenseBadge.Text = "🚀 Tam Sürüme Yükselt (Demo)";
+            _btnLicenseBadge.BackColor = Color.FromArgb(234, 88, 12); // vibrant orange-600
+            _btnLicenseBadge.FlatAppearance.MouseOverBackColor = Color.FromArgb(194, 65, 12);
         }
     }
 

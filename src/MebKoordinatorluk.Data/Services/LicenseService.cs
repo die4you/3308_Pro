@@ -435,6 +435,12 @@ public class LicenseService : ILicenseService
         return currentCount < 3; // Demo modunda maksimum 3 işletme
     }
 
+    public bool CanAddTeacher(int currentCount)
+    {
+        if (_cachedLicense.IsActive) return true;
+        return currentCount < 1; // Demo modunda maksimum 1 öğretmen
+    }
+
     public string GetWatermarkText()
     {
         if (_cachedLicense.IsActive) return string.Empty;

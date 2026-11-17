@@ -2041,6 +2041,9 @@ public class AttendanceView : UserControl
 
     private void BtnExportExcel_Click(object? sender, EventArgs e)
     {
+        if (!Common.LicenseUIHelper.CheckFeature("Devamsızlık Verilerini Excel Olarak Dışa Aktarma", this))
+            return;
+
         using var sfd = new SaveFileDialog
         {
             Filter = "CSV Dosyası (*.csv)|*.csv",
@@ -2078,6 +2081,9 @@ public class AttendanceView : UserControl
 
     private async void BtnUploadExcel_Click(object? sender, EventArgs e)
     {
+        if (!Common.LicenseUIHelper.CheckFeature("Excel'den Toplu Devamsızlık Yükleme", this))
+            return;
+
         using var ofd = new OpenFileDialog
         {
             Filter = "Excel ve CSV Dosyaları (*.xlsx;*.xls;*.csv)|*.xlsx;*.xls;*.csv|Tüm Dosyalar (*.*)|*.*",

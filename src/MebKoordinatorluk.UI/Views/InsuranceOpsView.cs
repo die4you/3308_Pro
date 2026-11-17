@@ -2995,6 +2995,9 @@ public class InsuranceOpsView : UserControl
 
     private async Task ExportXmlEBildirgeAsync()
     {
+        if (!Common.LicenseUIHelper.CheckFeature("SGK e-Bildirge XML Dosyası Üretimi", this))
+            return;
+
         try
         {
             if (_cmbYear?.SelectedItem == null || _cmbMonth?.SelectedItem == null)
@@ -3312,6 +3315,10 @@ public class InsuranceOpsView : UserControl
 
     private async Task ExportIseGirisXmlAsync(bool isEntry)
     {
+        string opName = isEntry ? "SGK İşe Giriş XML Üretimi" : "SGK İşten Çıkış XML Üretimi";
+        if (!Common.LicenseUIHelper.CheckFeature(opName, this))
+            return;
+
         try
         {
             _grid.EndEdit();

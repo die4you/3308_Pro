@@ -13,6 +13,7 @@ public interface ILicenseService
     Task<(bool Success, string Message)> ApplyLicenseKeyAsync(string licenseKey);
     bool CanAddStudent(int currentCount);
     bool CanAddEnterprise(int currentCount);
+    bool CanAddTeacher(int currentCount);
     string GetWatermarkText();
     Task<List<LicenseHistory>> GetLicenseHistoryAsync();
     Task RevokeLicenseToDemoAsync(string reason);

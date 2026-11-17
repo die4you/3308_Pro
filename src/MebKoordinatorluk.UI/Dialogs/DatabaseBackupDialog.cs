@@ -431,6 +431,9 @@ public class DatabaseBackupDialog : Form
 
     private async Task RestoreSelectedBackupAsync()
     {
+        if (!Common.LicenseUIHelper.CheckFeature("Veritabanı Yedeğinden Geri Yükleme", this))
+            return;
+
         if (_gridBackups.SelectedRows.Count == 0)
         {
             MessageBox.Show("Lütfen geri yüklemek istediğiniz yedek dosyasını tablodan seçiniz.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);

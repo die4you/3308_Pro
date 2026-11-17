@@ -549,6 +549,9 @@ public class StudentArchiveView : UserControl
 
     private void ExportToExcel()
     {
+        if (!Common.LicenseUIHelper.CheckFeature("Öğrenci Arşivini Excel Olarak Dışa Aktarma", this))
+            return;
+
         try
         {
             if (_allArchivedStudents.Count == 0)
