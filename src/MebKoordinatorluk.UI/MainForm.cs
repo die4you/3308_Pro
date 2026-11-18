@@ -1512,11 +1512,16 @@ public class MainForm : Form
         {
             if (Directory.Exists(_dbConfig.DataDirectory))
             {
-                var files = Directory.GetFiles(_dbConfig.DataDirectory, "meb_*.db");
+                var files = Directory.GetFiles(_dbConfig.DataDirectory, "*.db");
                 foreach (var file in files)
                 {
                     var fileName = Path.GetFileNameWithoutExtension(file);
-                    if (fileName.StartsWith("meb_") && fileName != "meb_koordinatorluk")
+                    if (fileName.StartsWith("arsiv_meb_"))
+                    {
+                        var yearPart = fileName["arsiv_meb_".Length..].Replace('_', '-');
+                        yearNames.Add(yearPart);
+                    }
+                    else if (fileName.StartsWith("meb_") && fileName != "meb_koordinatorluk")
                     {
                         var yearPart = fileName[4..].Replace('_', '-');
                         yearNames.Add(yearPart);
@@ -1605,28 +1610,27 @@ public class MainForm : Form
             return;
         }
 
-        if (string.Equals(_dbConfig.CurrentAcademicYear, yearName, StringComparison.OrdinalIgnoreCase))
+        bool isCurrentSelected = string.Equals(_dbConfig.CurrentAcademicYear, yearName, StringComparison.OrdinalIgnoreCase) &&
+                                 !CurrentUserSession.IsArchiveReadOnly;
+
+        if (isCurrentSelected)
         {
             return;
         }
 
         bool isReadOnly = access == AcademicYearAccessStatus.ArchiveReadOnly;
-        var targetPath = _dbConfig.GetDbPathForYear(yearName);
-
-        if (!File.Exists(targetPath) && !File.Exists(_dbConfig.DefaultDatabasePath))
+        if (isReadOnly)
         {
-            var promptRollover = MessageBox.Show(
-                $"'{yearName}' yılına ait veritabanı henüz oluşturulmamış.\n\n" +
-                $"Mevcut yıl verilerinizi devrederek yeni yıla başlamak ister misiniz?",
-                "Yeni Yıl — 3308 Pro",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            if (promptRollover == DialogResult.Yes)
+            var archivePath = _dbConfig.GetArchiveDbPath(yearName);
+            if (!File.Exists(archivePath))
             {
-                OpenAcademicYearRolloverDialog();
+                MessageBox.Show(
+                    $"'{yearName}' yılına ait arşiv veritabanı dosyası ({Path.GetFileName(archivePath)}) bulunamadı.",
+                    "Arşiv Bulunamadı — 3308 Pro",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
             }
-            return;
         }
 
         SwitchAcademicYear(yearName, isReadOnly);
@@ -1659,9 +1663,13 @@ public class MainForm : Form
         string activeYear = "2026-2027";
         try
         {
-            var active = _academicYearRepo.GetActiveYearAsync().GetAwaiter().GetResult();
-            if (active != null && !string.IsNullOrWhiteSpace(active.Name))
-                activeYear = active.Name;
+            using var conn = new Microsoft.Data.Sqlite.SqliteConnection(
+                $"Data Source={_dbConfig.DefaultDatabasePath};Mode=ReadOnly;Foreign Keys=False;");
+            conn.Open();
+            var val = Dapper.SqlMapper.ExecuteScalar<string>(
+                conn, "SELECT Value FROM Settings WHERE Key = 'AcademicYear' LIMIT 1;");
+            if (!string.IsNullOrWhiteSpace(val))
+                activeYear = val;
         }
         catch { }
 

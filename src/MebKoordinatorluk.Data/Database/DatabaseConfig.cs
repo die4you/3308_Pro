@@ -29,6 +29,48 @@ public class DatabaseConfig
         {
             DatabasePath = DefaultDatabasePath;
         }
+
+        MigrateLegacyYearClonesIfPresent();
+    }
+
+    private void MigrateLegacyYearClonesIfPresent()
+    {
+        try
+        {
+            if (!Directory.Exists(DataDirectory)) return;
+
+            // Önceki sürümlerden kalan meb_2026_2027.db gibi klon dosyaları tespit et ve birleştir
+            var files = Directory.GetFiles(DataDirectory, "meb_*.db");
+            foreach (var file in files)
+            {
+                var fileName = Path.GetFileNameWithoutExtension(file);
+                if (fileName.Equals("meb_koordinatorluk", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var cleanCurrent = SanitizeYear(CurrentAcademicYear);
+                if (fileName.Equals($"meb_{cleanCurrent}", StringComparison.OrdinalIgnoreCase))
+                {
+                    var fileInfo = new FileInfo(file);
+                    if (!File.Exists(DefaultDatabasePath))
+                    {
+                        File.Copy(file, DefaultDatabasePath, false);
+                    }
+                    else
+                    {
+                        var defaultInfo = new FileInfo(DefaultDatabasePath);
+                        if (fileInfo.LastWriteTimeUtc > defaultInfo.LastWriteTimeUtc && fileInfo.Length > 0)
+                        {
+                            File.Copy(file, DefaultDatabasePath, true);
+                        }
+                    }
+
+                    var bakPath = file + ".migrated.bak";
+                    if (File.Exists(bakPath)) File.Delete(bakPath);
+                    File.Move(file, bakPath);
+                }
+            }
+        }
+        catch { }
     }
 
     public string ConnectionString =>
@@ -40,10 +82,28 @@ public class DatabaseConfig
         return academicYear.Replace("-", "_").Replace("/", "_").Replace(" ", "").Trim();
     }
 
-    public string GetDbPathForYear(string academicYear)
+    public string GetArchiveDbPath(string academicYear)
     {
         var clean = SanitizeYear(academicYear);
-        return Path.Combine(DataDirectory, $"meb_{clean}.db");
+        var primaryArchive = Path.Combine(DataDirectory, $"arsiv_meb_{clean}.db");
+        if (File.Exists(primaryArchive)) return primaryArchive;
+
+        var legacyArchive = Path.Combine(DataDirectory, $"meb_{clean}.db");
+        if (File.Exists(legacyArchive)) return legacyArchive;
+
+        var altArchive = Path.Combine(DataDirectory, $"meb_{clean}_arsiv.db");
+        if (File.Exists(altArchive)) return altArchive;
+
+        return primaryArchive;
+    }
+
+    public string GetDbPathForYear(string academicYear)
+    {
+        if (string.Equals(academicYear, CurrentAcademicYear, StringComparison.OrdinalIgnoreCase) || !IsArchiveReadOnly)
+        {
+            return DefaultDatabasePath;
+        }
+        return GetArchiveDbPath(academicYear);
     }
 
     public void SwitchToYear(string academicYear, bool isReadOnly)
@@ -51,22 +111,15 @@ public class DatabaseConfig
         CurrentAcademicYear = academicYear;
         IsArchiveReadOnly = isReadOnly;
 
-        var targetPath = GetDbPathForYear(academicYear);
-
-        // Geriye dönük uyumluluk: Eğer targetPath henüz yoksa ama varsayılan meb_koordinatorluk.db varsa:
-        if (!File.Exists(targetPath) && File.Exists(DefaultDatabasePath))
+        if (isReadOnly)
         {
-            try
-            {
-                File.Copy(DefaultDatabasePath, targetPath, false);
-            }
-            catch
-            {
-                targetPath = DefaultDatabasePath;
-            }
+            DatabasePath = GetArchiveDbPath(academicYear);
+        }
+        else
+        {
+            DatabasePath = DefaultDatabasePath;
         }
 
-        DatabasePath = targetPath;
         try
         {
             Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();

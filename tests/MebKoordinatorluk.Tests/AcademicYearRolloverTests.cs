@@ -82,4 +82,31 @@ public class AcademicYearRolloverTests
         var access = licenseService.GetAcademicYearAccess(futureYear);
         Assert.Equal(AcademicYearAccessStatus.FutureLocked, access);
     }
+
+    [Fact]
+    public void DatabaseConfig_SwitchToYear_ActiveYear_ShouldAlwaysUseDefaultDatabase()
+    {
+        var config = new DatabaseConfig();
+        config.SwitchToYear("2026-2027", false);
+
+        Assert.Equal(config.DefaultDatabasePath, config.DatabasePath);
+        Assert.False(config.IsArchiveReadOnly);
+        Assert.Equal("2026-2027", config.CurrentAcademicYear);
+    }
+
+    [Fact]
+    public void DatabaseConfig_SwitchToYear_ArchiveYear_ShouldPointToArchiveDatabase()
+    {
+        var config = new DatabaseConfig();
+        config.SwitchToYear("2024-2025", true);
+
+        Assert.True(config.IsArchiveReadOnly);
+        Assert.Contains("arsiv_meb_2024_2025.db", config.DatabasePath);
+        Assert.Equal("2024-2025", config.CurrentAcademicYear);
+
+        // Switch back to active year
+        config.SwitchToYear("2026-2027", false);
+        Assert.Equal(config.DefaultDatabasePath, config.DatabasePath);
+        Assert.False(config.IsArchiveReadOnly);
+    }
 }

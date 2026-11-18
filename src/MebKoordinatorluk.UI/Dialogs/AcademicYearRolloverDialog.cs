@@ -482,14 +482,14 @@ public class AcademicYearRolloverDialog : Form
             return;
         }
 
-        var targetDbPath = _dbConfig.GetDbPathForYear(targetYear);
-        if (File.Exists(targetDbPath))
+        var archivePath = _dbConfig.GetArchiveDbPath(sourceYear);
+        if (File.Exists(archivePath))
         {
             var confirmOverwrite = MessageBox.Show(
-                $"'{targetYear}' yılına ait veritabanı dosyası zaten mevcut!\n\n" +
-                $"Yeniden devretmek, hedef yıldaki mevcut verileri sıfırlayacaktır.\n\n" +
+                $"'{sourceYear}' yılına ait önceki bir arşiv dosyası zaten mevcut ({Path.GetFileName(archivePath)})!\n\n" +
+                $"Yeniden devretmek, bu arşiv dosyasını güncel verilerle yenileyecektir.\n\n" +
                 $"Devam etmek istiyor musunuz?",
-                "Mevcut Dosya Uyarısı — 3308 Pro",
+                "Mevcut Arşiv Uyarısı — 3308 Pro",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2);
