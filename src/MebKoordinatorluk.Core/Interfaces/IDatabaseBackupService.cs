@@ -8,6 +8,7 @@ public record BackupFileInfo(string FileName, string FullPath, long FileSizeByte
 
 public interface IDatabaseBackupService
 {
+    string GetCurrentDatabasePath();
     Task<string> CreateBackupAsync(string? customFileName = null, string? destinationFolder = null);
     List<BackupFileInfo> GetExistingBackups();
     Task<bool> RestoreBackupAsync(string backupFilePath);

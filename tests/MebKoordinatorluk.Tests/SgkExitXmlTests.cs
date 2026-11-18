@@ -126,6 +126,7 @@ public class SgkExitXmlTests
     {
         var paths = new[]
         {
+            @"C:\Users\trgy\.gemini\antigravity\scratch\MebKoordinatorluk\src\MebKoordinatorluk.UI\bin\Debug\net9.0-windows\Data\meb_2026_2027.db",
             @"C:\Users\trgy\.gemini\antigravity\scratch\MebKoordinatorluk\src\MebKoordinatorluk.UI\bin\Debug\net9.0-windows\Data\meb_koordinatorluk.db",
             @"C:\Users\trgy\.gemini\antigravity\scratch\MebKoordinatorluk\Dagitim_Paketi\MebKoordinatorluk_Bagimsiz_x64\Data\meb_koordinatorluk.db"
         };

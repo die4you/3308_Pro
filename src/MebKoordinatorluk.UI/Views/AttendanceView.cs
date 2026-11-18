@@ -820,7 +820,7 @@ public class AttendanceView : UserControl
         {
             _isInitializing = false;
             MessageBox.Show(
-                $"Ay verileri yüklenirken bir hata oluştu:\n{ex.Message}\n\n(Veritabanı bozulması tespit edildiyse lütfen sağlam 'Data\\meb_koordinatorluk.db' dosyasını geri yükleyin.)",
+                $"Ay verileri yüklenirken bir hata oluştu:\n{ex.Message}\n\n(Veritabanı bozulması tespit edildiyse lütfen 'Yedekleme ve Kurtarma Merkezi'nden veritabanı yedeğini geri yükleyin.)",
                 "Veri Yükleme Hatası",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
@@ -1189,7 +1189,7 @@ public class AttendanceView : UserControl
                 $"Veritabanı dosyasında disk bozulması (malformed database) tespit edildi!\n\n" +
                 $"Hata Detayı: {ex.Message}\n\n" +
                 "Bu durum genellikle program açıkken USB/Flash diskin güvenle kaldırılmadan çekilmesinden veya anlık elektrik kesintisinden kaynaklanır.\n\n" +
-                "Çözüm: Lütfen sağlam 'Data\\meb_koordinatorluk.db' yedeğini geri yükleyin.",
+                "Çözüm: Lütfen 'Yedekleme ve Kurtarma Merkezi'nden en son veritabanı yedeğini geri yükleyin.",
                 "Veritabanı Bozulması Tespit Edildi",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);

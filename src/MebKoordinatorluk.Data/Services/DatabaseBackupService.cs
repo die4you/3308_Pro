@@ -22,6 +22,8 @@ public class DatabaseBackupService : IDatabaseBackupService
         _config = config;
     }
 
+    public string GetCurrentDatabasePath() => _config.DatabasePath;
+
     public string GetBackupDirectory()
     {
         var dbDir = Path.GetDirectoryName(_config.DatabasePath);
@@ -63,9 +65,10 @@ public class DatabaseBackupService : IDatabaseBackupService
                 Directory.CreateDirectory(targetDir);
             }
 
+            var cleanYear = DatabaseConfig.SanitizeYear(_config.CurrentAcademicYear);
             var fileName = !string.IsNullOrWhiteSpace(customFileName)
                 ? customFileName
-                : $"meb_koordinatorluk_{DateTime.Now:yyyy-MM-dd_HHmm}.bak";
+                : $"meb_{cleanYear}_{DateTime.Now:yyyy-MM-dd_HHmm}.bak";
 
             if (!fileName.EndsWith(".bak", StringComparison.OrdinalIgnoreCase))
             {
@@ -126,7 +129,8 @@ public class DatabaseBackupService : IDatabaseBackupService
             if (File.Exists(_config.DatabasePath))
             {
                 var safetyDir = GetBackupDirectory();
-                var safetyPath = Path.Combine(safetyDir, "meb_koordinatorluk_pre_restore_safety.bak");
+                var activeDbName = Path.GetFileNameWithoutExtension(_config.DatabasePath);
+                var safetyPath = Path.Combine(safetyDir, $"{activeDbName}_pre_restore_safety.bak");
                 try
                 {
                     File.Copy(_config.DatabasePath, safetyPath, overwrite: true);
@@ -208,7 +212,8 @@ public class DatabaseBackupService : IDatabaseBackupService
             if (!File.Exists(_config.DatabasePath)) return;
 
             var backupDir = GetBackupDirectory();
-            var todayBackupName = $"meb_koordinatorluk_{DateTime.Today:yyyy-MM-dd}_gunluk.bak";
+            var cleanYear = DatabaseConfig.SanitizeYear(_config.CurrentAcademicYear);
+            var todayBackupName = $"meb_{cleanYear}_{DateTime.Today:yyyy-MM-dd}_gunluk.bak";
             var destPath = Path.Combine(backupDir, todayBackupName);
 
             // Son 30 dakika içinde zaten günlük yedek alınmışsa tekrar beklemeden anında çık
@@ -303,7 +308,8 @@ public class DatabaseBackupService : IDatabaseBackupService
     public async Task<string> ResetDatabaseAsync(bool keepUsersAndSettings = true)
     {
         // 1. Önce otomatik güvenlik yedeği al
-        var backupPath = await CreateBackupAsync($"meb_koordinatorluk_pre_reset_safety_{DateTime.Now:yyyy-MM-dd_HHmmss}.bak");
+        var activeDbName = Path.GetFileNameWithoutExtension(_config.DatabasePath);
+        var backupPath = await CreateBackupAsync($"{activeDbName}_pre_reset_safety_{DateTime.Now:yyyy-MM-dd_HHmmss}.bak");
 
         await Task.Run(() =>
         {

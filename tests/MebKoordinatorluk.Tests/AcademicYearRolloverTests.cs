@@ -1,8 +1,11 @@
 using System;
+using System.IO;
+using System.Threading.Tasks;
 using MebKoordinatorluk.Core.Entities;
 using MebKoordinatorluk.Core.Enums;
 using MebKoordinatorluk.Data.Database;
 using MebKoordinatorluk.Data.Services;
+using Microsoft.Data.Sqlite;
 using Xunit;
 
 namespace MebKoordinatorluk.Tests;
@@ -84,29 +87,58 @@ public class AcademicYearRolloverTests
     }
 
     [Fact]
-    public void DatabaseConfig_SwitchToYear_ActiveYear_ShouldAlwaysUseDefaultDatabase()
+    public void DatabaseConfig_SwitchToYear_ActiveYear_ShouldPointToYearDatabase()
     {
         var config = new DatabaseConfig();
         config.SwitchToYear("2026-2027", false);
 
-        Assert.Equal(config.DefaultDatabasePath, config.DatabasePath);
+        Assert.Equal(config.GetDbPathForYear("2026-2027"), config.DatabasePath);
         Assert.False(config.IsArchiveReadOnly);
         Assert.Equal("2026-2027", config.CurrentAcademicYear);
+        Assert.EndsWith("meb_2026_2027.db", config.DatabasePath);
     }
 
     [Fact]
-    public void DatabaseConfig_SwitchToYear_ArchiveYear_ShouldPointToArchiveDatabase()
+    public void DatabaseConfig_SwitchToYear_ArchiveYear_ShouldPointToPastYearDatabase()
     {
         var config = new DatabaseConfig();
         config.SwitchToYear("2024-2025", true);
 
         Assert.True(config.IsArchiveReadOnly);
-        Assert.Contains("arsiv_meb_2024_2025.db", config.DatabasePath);
+        Assert.EndsWith("meb_2024_2025.db", config.DatabasePath);
         Assert.Equal("2024-2025", config.CurrentAcademicYear);
 
         // Switch back to active year
         config.SwitchToYear("2026-2027", false);
-        Assert.Equal(config.DefaultDatabasePath, config.DatabasePath);
+        Assert.EndsWith("meb_2026_2027.db", config.DatabasePath);
         Assert.False(config.IsArchiveReadOnly);
+    }
+
+    [Fact]
+    public async Task DatabaseBackupService_CreateBackupAsync_ShouldUseAcademicYearInFileName()
+    {
+        var tempDb = Path.Combine(Path.GetTempPath(), $"meb_2026_2027_{Guid.NewGuid():N}.db");
+        var config = new DatabaseConfig(tempDb);
+        config.SwitchToYear("2026-2027", false);
+        var factory = new SqliteConnectionFactory(config);
+        var initializer = new DatabaseInitializer(factory);
+        initializer.Initialize();
+
+        var backupService = new DatabaseBackupService(factory, config);
+        var backupPath = await backupService.CreateBackupAsync();
+
+        try
+        {
+            Assert.True(File.Exists(backupPath));
+            var fileName = Path.GetFileName(backupPath);
+            Assert.StartsWith("meb_2026_2027_", fileName);
+            Assert.EndsWith(".bak", fileName);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(tempDb)) try { File.Delete(tempDb); } catch { }
+            if (File.Exists(backupPath)) try { File.Delete(backupPath); } catch { }
+        }
     }
 }

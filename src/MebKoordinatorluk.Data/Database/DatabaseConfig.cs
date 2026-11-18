@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 
 namespace MebKoordinatorluk.Data.Database;
 
@@ -7,7 +8,7 @@ public class DatabaseConfig
 {
     public string DatabasePath { get; set; }
     public string DataDirectory { get; }
-    public string DefaultDatabasePath { get; }
+    public string DefaultDatabasePath => GetDbPathForYear(CurrentAcademicYear);
     public string CurrentAcademicYear { get; private set; } = "2026-2027";
     public bool IsArchiveReadOnly { get; private set; } = false;
 
@@ -19,7 +20,6 @@ public class DatabaseConfig
         {
             Directory.CreateDirectory(DataDirectory);
         }
-        DefaultDatabasePath = Path.Combine(DataDirectory, "meb_koordinatorluk.db");
 
         if (!string.IsNullOrWhiteSpace(customPath))
         {
@@ -27,50 +27,68 @@ public class DatabaseConfig
         }
         else
         {
-            DatabasePath = DefaultDatabasePath;
+            MigrateLegacyKoordinatorlukDbIfPresent();
+            // Data klasöründeki mevcut en son meb_*.db dosyasını tespit et (yoksa varsayılan meb_2026_2027.db)
+            var detectedYear = DetectLatestAcademicYear();
+            CurrentAcademicYear = detectedYear;
+            DatabasePath = GetDbPathForYear(CurrentAcademicYear);
         }
-
-        MigrateLegacyYearClonesIfPresent();
     }
 
-    private void MigrateLegacyYearClonesIfPresent()
+    private void MigrateLegacyKoordinatorlukDbIfPresent()
     {
         try
         {
             if (!Directory.Exists(DataDirectory)) return;
 
-            // Önceki sürümlerden kalan meb_2026_2027.db gibi klon dosyaları tespit et ve birleştir
-            var files = Directory.GetFiles(DataDirectory, "meb_*.db");
-            foreach (var file in files)
+            var oldKoordinatorlukDb = Path.Combine(DataDirectory, "meb_koordinatorluk.db");
+            var target2026Db = Path.Combine(DataDirectory, "meb_2026_2027.db");
+
+            if (File.Exists(oldKoordinatorlukDb))
             {
-                var fileName = Path.GetFileNameWithoutExtension(file);
-                if (fileName.Equals("meb_koordinatorluk", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var cleanCurrent = SanitizeYear(CurrentAcademicYear);
-                if (fileName.Equals($"meb_{cleanCurrent}", StringComparison.OrdinalIgnoreCase))
+                if (!File.Exists(target2026Db))
                 {
-                    var fileInfo = new FileInfo(file);
-                    if (!File.Exists(DefaultDatabasePath))
+                    File.Move(oldKoordinatorlukDb, target2026Db);
+                }
+                else
+                {
+                    var oldInfo = new FileInfo(oldKoordinatorlukDb);
+                    var targetInfo = new FileInfo(target2026Db);
+                    if (oldInfo.LastWriteTimeUtc > targetInfo.LastWriteTimeUtc && oldInfo.Length > 0)
                     {
-                        File.Copy(file, DefaultDatabasePath, false);
+                        File.Copy(oldKoordinatorlukDb, target2026Db, true);
                     }
-                    else
-                    {
-                        var defaultInfo = new FileInfo(DefaultDatabasePath);
-                        if (fileInfo.LastWriteTimeUtc > defaultInfo.LastWriteTimeUtc && fileInfo.Length > 0)
-                        {
-                            File.Copy(file, DefaultDatabasePath, true);
-                        }
-                    }
-
-                    var bakPath = file + ".migrated.bak";
-                    if (File.Exists(bakPath)) File.Delete(bakPath);
-                    File.Move(file, bakPath);
+                    try { File.Delete(oldKoordinatorlukDb); } catch { }
                 }
             }
         }
         catch { }
+    }
+
+    public string DetectLatestAcademicYear()
+    {
+        try
+        {
+            if (Directory.Exists(DataDirectory))
+            {
+                var files = Directory.GetFiles(DataDirectory, "meb_*.db");
+                var years = files
+                    .Select(Path.GetFileNameWithoutExtension)
+                    .OfType<string>()
+                    .Where(f => f.StartsWith("meb_") && f != "meb_koordinatorluk" && f.Length > 4)
+                    .Select(f => f[4..].Replace('_', '-'))
+                    .OrderByDescending(y => y)
+                    .ToList();
+
+                if (years.Count > 0)
+                {
+                    return years[0];
+                }
+            }
+        }
+        catch { }
+
+        return "2026-2027";
     }
 
     public string ConnectionString =>
@@ -78,47 +96,21 @@ public class DatabaseConfig
 
     public static string SanitizeYear(string academicYear)
     {
-        if (string.IsNullOrWhiteSpace(academicYear)) return "current";
+        if (string.IsNullOrWhiteSpace(academicYear)) return "2026_2027";
         return academicYear.Replace("-", "_").Replace("/", "_").Replace(" ", "").Trim();
-    }
-
-    public string GetArchiveDbPath(string academicYear)
-    {
-        var clean = SanitizeYear(academicYear);
-        var primaryArchive = Path.Combine(DataDirectory, $"arsiv_meb_{clean}.db");
-        if (File.Exists(primaryArchive)) return primaryArchive;
-
-        var legacyArchive = Path.Combine(DataDirectory, $"meb_{clean}.db");
-        if (File.Exists(legacyArchive)) return legacyArchive;
-
-        var altArchive = Path.Combine(DataDirectory, $"meb_{clean}_arsiv.db");
-        if (File.Exists(altArchive)) return altArchive;
-
-        return primaryArchive;
     }
 
     public string GetDbPathForYear(string academicYear)
     {
-        if (string.Equals(academicYear, CurrentAcademicYear, StringComparison.OrdinalIgnoreCase) || !IsArchiveReadOnly)
-        {
-            return DefaultDatabasePath;
-        }
-        return GetArchiveDbPath(academicYear);
+        var clean = SanitizeYear(academicYear);
+        return Path.Combine(DataDirectory, $"meb_{clean}.db");
     }
 
     public void SwitchToYear(string academicYear, bool isReadOnly)
     {
         CurrentAcademicYear = academicYear;
         IsArchiveReadOnly = isReadOnly;
-
-        if (isReadOnly)
-        {
-            DatabasePath = GetArchiveDbPath(academicYear);
-        }
-        else
-        {
-            DatabasePath = DefaultDatabasePath;
-        }
+        DatabasePath = GetDbPathForYear(academicYear);
 
         try
         {

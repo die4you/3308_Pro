@@ -1512,16 +1512,11 @@ public class MainForm : Form
         {
             if (Directory.Exists(_dbConfig.DataDirectory))
             {
-                var files = Directory.GetFiles(_dbConfig.DataDirectory, "*.db");
+                var files = Directory.GetFiles(_dbConfig.DataDirectory, "meb_*.db");
                 foreach (var file in files)
                 {
                     var fileName = Path.GetFileNameWithoutExtension(file);
-                    if (fileName.StartsWith("arsiv_meb_"))
-                    {
-                        var yearPart = fileName["arsiv_meb_".Length..].Replace('_', '-');
-                        yearNames.Add(yearPart);
-                    }
-                    else if (fileName.StartsWith("meb_") && fileName != "meb_koordinatorluk")
+                    if (fileName.StartsWith("meb_") && fileName != "meb_koordinatorluk")
                     {
                         var yearPart = fileName[4..].Replace('_', '-');
                         yearNames.Add(yearPart);
@@ -1619,18 +1614,15 @@ public class MainForm : Form
         }
 
         bool isReadOnly = access == AcademicYearAccessStatus.ArchiveReadOnly;
-        if (isReadOnly)
+        var targetPath = _dbConfig.GetDbPathForYear(yearName);
+        if (!File.Exists(targetPath))
         {
-            var archivePath = _dbConfig.GetArchiveDbPath(yearName);
-            if (!File.Exists(archivePath))
-            {
-                MessageBox.Show(
-                    $"'{yearName}' yılına ait arşiv veritabanı dosyası ({Path.GetFileName(archivePath)}) bulunamadı.",
-                    "Arşiv Bulunamadı — 3308 Pro",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-                return;
-            }
+            MessageBox.Show(
+                $"'{yearName}' yılına ait veritabanı dosyası ({Path.GetFileName(targetPath)}) bulunamadı.",
+                "Veritabanı Bulunamadı — 3308 Pro",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
         }
 
         SwitchAcademicYear(yearName, isReadOnly);
@@ -1660,19 +1652,7 @@ public class MainForm : Form
 
     private void SwitchToActiveAcademicYear()
     {
-        string activeYear = "2026-2027";
-        try
-        {
-            using var conn = new Microsoft.Data.Sqlite.SqliteConnection(
-                $"Data Source={_dbConfig.DefaultDatabasePath};Mode=ReadOnly;Foreign Keys=False;");
-            conn.Open();
-            var val = Dapper.SqlMapper.ExecuteScalar<string>(
-                conn, "SELECT Value FROM Settings WHERE Key = 'AcademicYear' LIMIT 1;");
-            if (!string.IsNullOrWhiteSpace(val))
-                activeYear = val;
-        }
-        catch { }
-
+        string activeYear = _dbConfig.DetectLatestAcademicYear();
         SwitchAcademicYear(activeYear, false);
     }
 

@@ -320,18 +320,17 @@ public class DatabaseBackupDialog : Form
         try
         {
             var backupDir = _backupService.GetBackupDirectory();
-            var dbDir = Path.GetDirectoryName(backupDir);
-            var dbPath = Path.Combine(dbDir ?? "", "meb_koordinatorluk.db");
+            var dbPath = _backupService.GetCurrentDatabasePath();
 
             if (File.Exists(dbPath))
             {
                 var fi = new FileInfo(dbPath);
-                _lblDbLocation.Text = $"📁 Aktif Veritabanı: {fi.FullName}";
+                _lblDbLocation.Text = $"📁 Aktif Veritabanı: {fi.Name}";
                 _lblDbSize.Text = $"💾 Aktif Boyut: {(fi.Length / 1024.0 / 1024.0):F2} MB (Son İşlem: {fi.LastWriteTime:dd.MM.yyyy HH:mm})";
             }
             else
             {
-                _lblDbLocation.Text = "📁 Aktif Veritabanı: meb_koordinatorluk.db";
+                _lblDbLocation.Text = $"📁 Aktif Veritabanı: {Path.GetFileName(dbPath)}";
                 _lblDbSize.Text = "💾 Aktif Boyut: Bilinmiyor";
             }
 
@@ -399,10 +398,11 @@ public class DatabaseBackupDialog : Form
 
     private async Task BackupCustomLocationAsync()
     {
+        var activeDbName = Path.GetFileNameWithoutExtension(_backupService.GetCurrentDatabasePath());
         using var sfd = new SaveFileDialog
         {
             Filter = "Veritabanı Yedeği (*.bak)|*.bak|SQLite Veritabanı (*.db)|*.db|Tüm Dosyalar (*.*)|*.*",
-            FileName = $"meb_koordinatorluk_yedek_{DateTime.Now:yyyyMMdd_HHmm}.bak",
+            FileName = $"{activeDbName}_yedek_{DateTime.Now:yyyyMMdd_HHmm}.bak",
             Title = "Yedeğin Kaydedileceği Konumu Seçin (USB Flash Bellek veya Klasör)"
         };
 

@@ -41,37 +41,37 @@ public class AcademicYearRolloverService : IAcademicYearRolloverService
             return result;
         }
 
-        // 1. Aktif Çalışma Veritabanı (meb_koordinatorluk.db)
-        var activeDbPath = _dbConfig.DefaultDatabasePath;
-        if (!File.Exists(activeDbPath))
+        // 1. Kaynak Veritabanı Yolu (meb_2026_2027.db)
+        var sourceDbPath = _dbConfig.GetDbPathForYear(options.SourceYear);
+        if (!File.Exists(sourceDbPath))
         {
-            activeDbPath = _dbConfig.DatabasePath;
+            sourceDbPath = _dbConfig.DatabasePath;
         }
 
-        if (!File.Exists(activeDbPath))
+        if (!File.Exists(sourceDbPath))
         {
             result.Success = false;
-            result.Message = $"Aktif veritabanı bulunamadı: {activeDbPath}";
+            result.Message = $"Kaynak veritabanı bulunamadı: {sourceDbPath}";
             return result;
         }
 
-        // 2. Geçmiş Yıl İçin Arşiv Dosyası Oluştur (arsiv_meb_{cleanSourceYear}.db)
-        var cleanSource = DatabaseConfig.SanitizeYear(options.SourceYear);
-        var archiveDbPath = Path.Combine(_dbConfig.DataDirectory, $"arsiv_meb_{cleanSource}.db");
+        // 2. Hedef Veritabanı Yolu (meb_2027_2028.db)
+        var targetDbPath = _dbConfig.GetDbPathForYear(options.TargetYear);
 
         try
         {
-            progress?.Report($"'{options.SourceYear}' yılı verileri arşivleniyor ({Path.GetFileName(archiveDbPath)})...");
+            progress?.Report($"'{options.TargetYear}' yılı veritabanı dosyası oluşturuluyor ({Path.GetFileName(targetDbPath)})...");
 
             // Bağlantı havuzlarını temizle
             SqliteConnection.ClearAllPools();
 
-            // Kaynak veritabanının tam birebir kopyasını arşiv olarak sakla (12. sınıflar, devamsızlıklar ve puantajlar burada korunur)
-            File.Copy(activeDbPath, archiveDbPath, true);
+            // Kaynak veritabanının tam kopyasını yeni yıl için oluştur
+            // Böylece kaynak veritabanı (meb_2026_2027.db) eski yıl arşivi olarak TERTEMİZ KORUNUR!
+            File.Copy(sourceDbPath, targetDbPath, true);
 
-            progress?.Report("Aktif veritabanı yeni eğitim-öğretim yılına hazırlanıyor...");
+            progress?.Report("Yeni eğitim-öğretim yılı verileri hazırlanıyor...");
 
-            using var conn = new SqliteConnection($"Data Source={activeDbPath};Mode=ReadWrite;Foreign Keys=False;");
+            using var conn = new SqliteConnection($"Data Source={targetDbPath};Mode=ReadWrite;Foreign Keys=False;");
             await conn.OpenAsync();
             using var trans = conn.BeginTransaction();
 
@@ -118,7 +118,7 @@ public class AcademicYearRolloverService : IAcademicYearRolloverService
 
                     if (IsClass12th(oldClassName))
                     {
-                        // 12. sınıflar mezun olduğu için silinir (arşivde zaten kayıtlı)
+                        // 12. sınıflar mezun olduğu için yeni yıldan silinir (eski yıl meb_2026_2027.db dosyasında güvende)
                         await conn.ExecuteAsync("DELETE FROM SchoolClasses WHERE Id = @Id;", new { Id = clsId }, trans);
                         continue;
                     }
@@ -149,7 +149,7 @@ public class AcademicYearRolloverService : IAcademicYearRolloverService
 
                     if (is12th)
                     {
-                        // 12. sınıflar mezun: aktif veritabanından kaldırılır (arşivde güvende)
+                        // 12. sınıflar mezun: yeni yıl veritabanından kaldırılır (eski yıl dosyasında arşivde güvende)
                         await conn.ExecuteAsync("DELETE FROM Students WHERE Id = @Id;", new { Id = sId }, trans);
                         result.GraduatedStudentsCount++;
                         continue;
@@ -277,20 +277,20 @@ public class AcademicYearRolloverService : IAcademicYearRolloverService
             // İşlemleri kalıcı olarak onayla
             trans.Commit();
 
-            // Aktif yılı güncelle
+            // Aktif veritabanını hedef yeni yıla geçir
             _dbConfig.SwitchToYear(options.TargetYear, false);
 
             progress?.Report("Devir işlemi başarıyla tamamlandı.");
 
             result.Success = true;
             result.Message = $"🎉 {options.TargetYear} Eğitim-Öğretim Yılı başarıyla başlatıldı!\n\n" +
-                             $"• '{options.SourceYear}' yılı verileri '{Path.GetFileName(archiveDbPath)}' olarak arşivlendi.\n" +
+                             $"• Yeni aktif veritabanınız: '{Path.GetFileName(targetDbPath)}'\n" +
+                             $"• '{options.SourceYear}' yılı verileri '{Path.GetFileName(sourceDbPath)}' dosyasında arşiv olarak korundu.\n" +
                              $"• {result.PromotedStudentsCount} öğrenci bir üst sınıfa terfi ettirildi.\n" +
                              $"• {result.GraduatedStudentsCount} 12. sınıf öğrencisi mezun olarak eski yıl arşivinde korundu.\n" +
                              $"• {result.PromotedClassesCount} sınıf şubesi güncellendi.\n" +
                              $"• {result.CopiedTeachersCount} koordinatör öğretmen ve {result.CopiedEnterprisesCount} işletme aktarıldı.\n" +
-                             $"• Devamsızlık ve puantaj çizelgeleri yeni yıl için tertemiz sıfırlandı.\n" +
-                             $"• Sistem tek ve aktif 'meb_koordinatorluk.db' üzerinden kesintisiz çalışmaya devam ediyor.";
+                             $"• Devamsızlık ve puantaj çizelgeleri yeni yıl için tertemiz sıfırlandı.";
 
             return result;
         }
