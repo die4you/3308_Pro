@@ -61,7 +61,7 @@ public class EOkulImportDialog : Form
         var pnlHeader = new Panel
         {
             Dock = DockStyle.Top,
-            Height = 82,
+            Height = 92,
             BackColor = Color.White,
             Padding = new Padding(20, 8, 20, 8)
         };
@@ -91,10 +91,10 @@ public class EOkulImportDialog : Form
 
         var lblEokulNote = new Label
         {
-            Text = "(E-Okul Öğrenci bilgileri YAZDIR ekranından OOG01001R020 Şube Listesi (Öğrenci No Sıralı) raporunu Excel/Veri olarak indiriniz.)",
+            Text = "(e-Okul Öğrenci Bilgileri > YAZDIR ekranından OOG01001R020 Şube Listesi raporunu Excel olarak indiriniz.\nT.C. Kimlik No ve Doğum Tarihlerini aktarmak için 090 nolu raporu 'T.C. Kimlik No & Doğum Tarihi Aktar' menüsünden aktarabilirsiniz.)",
             Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
             ForeColor = Color.FromArgb(220, 38, 38), // Koyu Kırmızı (Red-600)
-            Location = new Point(20, 54),
+            Location = new Point(20, 52),
             AutoSize = true
         };
         pnlHeader.Controls.AddRange([lblTitle, lblSubtitle, lblEokulNote]);

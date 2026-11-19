@@ -43,7 +43,7 @@ public static class LicenseHeartbeatService
                 daysLeft = license.RemainingDays,
                 studentCount = studentCount,
                 enterpriseCount = enterpriseCount,
-                version = "3308 Pro v2.5"
+                version = "3308 Pro v2.6"
             };
 
             var json = JsonSerializer.Serialize(payload);
@@ -153,7 +153,7 @@ public static class LicenseHeartbeatService
                 schoolName = !string.IsNullOrWhiteSpace(schoolName) ? schoolName : "-",
                 cityDistrict = !string.IsNullOrWhiteSpace(cityDistrict) ? cityDistrict : "-",
                 licenseStatus = licenseStatus,
-                version = "3308 Pro v2.5",
+                version = "3308 Pro v2.6",
                 sentAt = DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss")
             };
 

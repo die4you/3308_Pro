@@ -8,7 +8,7 @@ public class UpdateCheckResult
 {
     public bool Success { get; set; }
     public bool IsUpdateAvailable { get; set; }
-    public string CurrentVersion { get; set; } = "2.5";
+    public string CurrentVersion { get; set; } = "2.6";
     public string LatestVersion { get; set; } = "";
     public string ReleaseTitle { get; set; } = "";
     public string ReleaseNotes { get; set; } = "";
@@ -31,7 +31,7 @@ public class UpdateCheckResult
 
 public class GitHubUpdateService
 {
-    public const string CurrentVersion = "2.5";
+    public const string CurrentVersion = "2.6";
     public const string RepoOwner = "die4you";
     public const string RepoName = "3308_Pro";
 

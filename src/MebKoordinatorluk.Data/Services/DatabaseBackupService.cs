@@ -122,15 +122,32 @@ public class DatabaseBackupService : IDatabaseBackupService
                 throw new FileNotFoundException("Geri yüklenecek yedek dosyası bulunamadı!", backupFilePath);
             }
 
+            // 0. Önce doğrudan seçilen yedek dosyasının bütünlüğünü test et (mevcut aktif veritabanına dokunmadan!)
+            try
+            {
+                using var checkConn = new SqliteConnection($"Data Source={backupFilePath};Mode=ReadOnly;");
+                checkConn.Open();
+                var checkRes = checkConn.ExecuteScalar<string>("PRAGMA quick_check;");
+                if (!string.Equals(checkRes, "ok", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+
             // 1. Tüm açık SQLite bağlantı havuzlarını serbest bırak
             SqliteConnection.ClearAllPools();
 
             // 2. Mevcut veritabanının güvenlik yedeğini al (Hata durumunda geri dönebilmek için)
+            string? safetyPath = null;
             if (File.Exists(_config.DatabasePath))
             {
                 var safetyDir = GetBackupDirectory();
                 var activeDbName = Path.GetFileNameWithoutExtension(_config.DatabasePath);
-                var safetyPath = Path.Combine(safetyDir, $"{activeDbName}_pre_restore_safety.bak");
+                safetyPath = Path.Combine(safetyDir, $"{activeDbName}_pre_restore_safety.bak");
                 try
                 {
                     File.Copy(_config.DatabasePath, safetyPath, overwrite: true);
@@ -155,6 +172,10 @@ public class DatabaseBackupService : IDatabaseBackupService
                 var result = conn.ExecuteScalar<string>("PRAGMA quick_check;");
                 if (!string.Equals(result, "ok", StringComparison.OrdinalIgnoreCase))
                 {
+                    if (safetyPath != null && File.Exists(safetyPath))
+                    {
+                        try { File.Copy(safetyPath, _config.DatabasePath, overwrite: true); } catch { }
+                    }
                     return false;
                 }
 

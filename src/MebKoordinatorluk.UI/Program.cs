@@ -119,5 +119,19 @@ static class Program
             backupService.PerformAutoBackupOnExit();
         }
         catch { }
+
+        // 4. Açık SQLite bağlantı havuzlarını ve DI kaynaklarını temizle
+        try
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            if (serviceProvider is IDisposable disp)
+            {
+                disp.Dispose();
+            }
+        }
+        catch { }
+
+        // 5. Visual Studio ve sistemde anında temiz çıkış yap (gecikmeyi önler)
+        Environment.Exit(0);
     }
 }

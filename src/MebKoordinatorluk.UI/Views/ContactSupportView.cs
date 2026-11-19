@@ -24,8 +24,6 @@ public class ContactSupportView : UserControl
     // UI Controls - Sol Kart (Sistem & Lisans)
     private Label _lblSchoolVal = null!;
     private Label _lblCityVal = null!;
-    private TextBox _txtHwid = null!;
-    private Button _btnCopyHwid = null!;
     private Label _lblStatusBadge = null!;
     private Label _lblLicenseDetails = null!;
     private Button _btnActivateLicense = null!;
@@ -209,40 +207,6 @@ public class ContactSupportView : UserControl
         };
         flp.Controls.Add(_lblCityVal);
 
-        // Makine Kodu (HWID)
-        flp.Controls.Add(CreateFieldHeader("Bilgisayar Makine Kodu (HWID):"));
-        var pnlHwid = new FlowLayoutPanel
-        {
-            AutoSize = true,
-            FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false,
-            Margin = new Padding(0, 2, 0, 12)
-        };
-        _txtHwid = new TextBox
-        {
-            ReadOnly = true,
-            BackColor = Color.FromArgb(241, 245, 249),
-            Font = new Font("Consolas", 10.5f, FontStyle.Bold),
-            ForeColor = Color.FromArgb(30, 58, 138),
-            Width = 270,
-            Height = 28
-        };
-        _btnCopyHwid = new Button
-        {
-            Text = "📋 Kodu Kopyala",
-            Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
-            BackColor = Color.FromArgb(238, 242, 255),
-            ForeColor = Color.FromArgb(67, 56, 202),
-            FlatStyle = FlatStyle.Flat,
-            Size = new Size(130, 28),
-            Margin = new Padding(8, 0, 0, 0),
-            Cursor = Cursors.Hand
-        };
-        _btnCopyHwid.FlatAppearance.BorderColor = Color.FromArgb(199, 210, 254);
-        _btnCopyHwid.Click += (s, e) => CopyToClipboard(_txtHwid.Text, "Makine Kodu (HWID) panoya kopyalandı!");
-        pnlHwid.Controls.AddRange([_txtHwid, _btnCopyHwid]);
-        flp.Controls.Add(pnlHwid);
-
         // Lisans Durumu
         flp.Controls.Add(CreateFieldHeader("Lisans Durumu:"));
         _lblStatusBadge = new Label
@@ -292,7 +256,7 @@ public class ContactSupportView : UserControl
         flp.Controls.Add(CreateFieldHeader("Program Sürümü:"));
         var lblVersion = new Label
         {
-            Text = "3308 Pro v2.5 (Bağımsız x64 Sürüm)",
+            Text = "3308 Pro v2.6 (Bağımsız x64 Sürüm)",
             Font = new Font("Segoe UI", 9f, FontStyle.Bold),
             ForeColor = UITheme.TextPrimary,
             AutoSize = true,
@@ -588,8 +552,6 @@ public class ContactSupportView : UserControl
                 ? _settings.DistrictAndCity
                 : (!string.IsNullOrWhiteSpace(_licenseInfo.CityDistrict) ? _licenseInfo.CityDistrict : "-");
 
-            _txtHwid.Text = _licenseService.MachineCode;
-
             if (_licenseInfo.IsActive)
             {
                 _lblStatusBadge.Text = " ✔️ TAM SÜRÜM (LİSANSLI) ";
@@ -704,7 +666,7 @@ public class ContactSupportView : UserControl
                 $"Okul / Kurum: {school}\n" +
                 $"İl / İlçe: {city}\n" +
                 $"Makine Kodu (HWID): {hwid}\n" +
-                $"Sürüm: 3308 Pro v2.5\n" +
+                $"Sürüm: 3308 Pro v2.6\n" +
                 $"Lisans Durumu: {(_licenseInfo.IsActive ? "Tam Sürüm (Lisanslı)" : "Deneme Sürümü (Demo)")}\n" +
                 $"Konu: {subjectText}\n\n" +
                 $"Mesajım:\n{userMsg}\n\n" +
@@ -829,7 +791,7 @@ public class ContactSupportView : UserControl
                       $"İl / İlçe: {_lblCityVal.Text}\n" +
                       $"Makine Kodu (HWID): {_licenseService.MachineCode}\n" +
                       $"Lisans Durumu: {(_licenseInfo.IsActive ? $"Lisanslı (Bitiş: {_licenseInfo.EndDate:dd.MM.yyyy})" : "Deneme Sürümü (Demo)")}\n" +
-                      $"Sürüm: 3308 Pro v2.5\n" +
+                      $"Sürüm: 3308 Pro v2.6\n" +
                       $"Tarih: {DateTime.Now:dd.MM.yyyy HH:mm}";
 
         CopyToClipboard(info, "Tüm sistem ve lisans bilgileri panoya kopyalandı!\nE-posta veya WhatsApp üzerinden kolayca paylaşabilirsiniz.");

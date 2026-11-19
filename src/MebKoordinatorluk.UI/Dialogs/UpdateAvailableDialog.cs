@@ -12,7 +12,6 @@ public class UpdateAvailableDialog : Form
     private ProgressBar _progressBar = null!;
     private Label _lblDownloadProgress = null!;
     private Button _btnInstall = null!;
-    private Button _btnWeb = null!;
     private Button _btnLater = null!;
     private CancellationTokenSource? _cts;
 
@@ -164,30 +163,11 @@ public class UpdateAvailableDialog : Form
         _btnInstall.FlatAppearance.BorderSize = 0;
         _btnInstall.Click += async (s, e) => await StartDownloadAndInstallAsync();
 
-        _btnWeb = new Button
-        {
-            Text = "🌐 GitHub'da Gör",
-            Location = new Point(170, 14),
-            Size = new Size(140, 38),
-            BackColor = Color.FromArgb(241, 245, 249),
-            ForeColor = Color.FromArgb(30, 41, 59),
-            FlatStyle = FlatStyle.Flat,
-            Cursor = Cursors.Hand
-        };
-        _btnWeb.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
-        _btnWeb.Click += (s, e) =>
-        {
-            if (!string.IsNullOrWhiteSpace(_updateInfo.HtmlUrl))
-            {
-                Process.Start(new ProcessStartInfo(_updateInfo.HtmlUrl) { UseShellExecute = true });
-            }
-        };
-
         _btnLater = new Button
         {
             Text = "Daha Sonra",
             Location = new Point(24, 14),
-            Size = new Size(100, 38),
+            Size = new Size(110, 38),
             BackColor = Color.FromArgb(241, 245, 249),
             ForeColor = Color.FromArgb(100, 116, 139),
             FlatStyle = FlatStyle.Flat,
@@ -201,7 +181,6 @@ public class UpdateAvailableDialog : Form
         };
 
         pnlBottom.Controls.Add(_btnInstall);
-        pnlBottom.Controls.Add(_btnWeb);
         pnlBottom.Controls.Add(_btnLater);
 
         this.Controls.Add(pnlHeader);

@@ -477,8 +477,9 @@ public class DatabaseBackupDialog : Form
             else
             {
                 MessageBox.Show(
-                    "Geri yüklenen veritabanı dosyasının bütünlük testinde sorun tespit edildi!",
-                    "Uyarı",
+                    "Seçilen yedek dosyasının veri bütünlüğü testinde sorun tespit edildi!\n\n" +
+                    "Mevcut sağlam veritabanınız korunmuştur. Lütfen 13 Kasım ve sonrasına ait güncel ve sağlıklı yedekleri tercih ediniz.",
+                    "Veri Bütünlüğü Uyarısı",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
             }

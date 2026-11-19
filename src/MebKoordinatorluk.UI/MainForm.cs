@@ -454,19 +454,19 @@ public class MainForm : Form
             ("task-calendar", "📅", "İdari Görev Takvimi", (Action)(() => SwitchTab("task-calendar")))
         ]);
 
-        // Category 2: KAYIT YÖNETİMİ
-        AddSidebarCategory("👥 KAYIT YÖNETİMİ", [
-            ("students", "🎓", "Öğrenci Listesi", (Action)(() => SwitchTab("students"))),
-            ("student-archive", "🗄️", "Öğrenci Arşivi", (Action)(() => SwitchTab("student-archive"))),
-            ("teachers", "👨‍🏫", "Koordinatör Öğretmenler", (Action)(() => SwitchTab("teachers"))),
-            ("enterprises", "🏢", "Staj İşletmeleri", (Action)(() => SwitchTab("enterprises")))
-        ]);
-
-        // Category 3: OKUL & KURUM TANIMLARI
+        // Category 2: OKUL TANIMLARI
         AddSidebarCategory("🏫 OKUL TANIMLARI", [
             ("classes", "🏫", "Sınıflar & Şubeler", (Action)(() => SwitchTab("classes"))),
             ("fields", "📚", "Alan / Dal Tanımları", (Action)(() => SwitchTab("fields"))),
-            ("address-groups", "📍", "Adres Grupları", (Action)(() => SwitchTab("address-groups")))
+            ("address-groups", "📍", "Adres Grupları", (Action)(() => SwitchTab("address-groups"))),
+            ("enterprises", "🏢", "Staj İşletmeleri", (Action)(() => SwitchTab("enterprises")))
+        ]);
+
+        // Category 3: ÖĞRENCİ & ÖĞRETMEN TANIMLARI
+        AddSidebarCategory("👥 ÖĞRENCİ & ÖĞRETMEN TANIMLARI", [
+            ("students", "🎓", "Öğrenci Listesi", (Action)(() => SwitchTab("students"))),
+            ("student-archive", "🗄️", "Öğrenci Arşivi", (Action)(() => SwitchTab("student-archive"))),
+            ("teachers", "👨‍🏫", "Koordinatör Öğretmenler", (Action)(() => SwitchTab("teachers")))
         ]);
 
         // Category 4: SİGORTA İŞLEMLERİ
