@@ -472,12 +472,12 @@ public static class EOkulClassListParser
         return result;
     }
 
-    private static DateTime? ParseTurkishDate(string text)
+    public static DateTime? ParseTurkishDate(string text)
     {
         if (string.IsNullOrWhiteSpace(text)) return null;
         text = text.Trim();
 
-        var formats = new[] { "dd/MM/yyyy", "dd.MM.yyyy", "yyyy-MM-dd", "d/M/yyyy", "d.M.yyyy", "dd-MM-yyyy" };
+        var formats = new[] { "dd/MM/yyyy", "dd.MM.yyyy", "yyyy-MM-dd", "d/M/yyyy", "d.M.yyyy", "dd-MM-yyyy", "d-M-yyyy" };
         if (DateTime.TryParseExact(text, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt))
         {
             return dt;
@@ -486,6 +486,21 @@ public static class EOkulClassListParser
         if (DateTime.TryParse(text, new CultureInfo("tr-TR"), DateTimeStyles.None, out var dt2))
         {
             return dt2;
+        }
+
+        // Metin içerisinde tarih deseni ara (örn. "22/08/1997 ANKARA" veya "16.07.2012")
+        var match = Regex.Match(text, @"\b(\d{1,2}[\./\-]\d{1,2}[\./\-]\d{4})\b");
+        if (match.Success)
+        {
+            var datePart = match.Value;
+            if (DateTime.TryParseExact(datePart, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dt3))
+            {
+                return dt3;
+            }
+            if (DateTime.TryParse(datePart, new CultureInfo("tr-TR"), DateTimeStyles.None, out var dt4))
+            {
+                return dt4;
+            }
         }
 
         return null;

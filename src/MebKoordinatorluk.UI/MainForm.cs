@@ -523,7 +523,7 @@ public class MainForm : Form
             AddSidebarCategory("📥 VERİ AKTARIMI", [
                 ("import-eokul", "📥", "e-Okul Sınıf Yükle", (Action)OpenEOkulImport),
                 ("student-audit", "🔍", "Öğrenci Kontrolü", (Action)OpenStudentAuditDialog),
-                ("import-tc", "🆔", "e-Okul TCKN Aktar", (Action)OpenEOkulTcImport),
+                ("import-tc", "🆔", "e-Okul TCKN / D.Tarihi", (Action)OpenEOkulTcImport),
                 ("import-iban", "💳", "Öğrenci IBAN Yükle", (Action)OpenStudentIbanImport),
                 ("import-bulk", "📋", "Toplu Öğrenci Ekle", (Action)OpenBulkStudentsDialog)
             ]);

@@ -53,9 +53,9 @@ public class EOkulTcImportDialog : Form
 
     private void InitializeComponent()
     {
-        Text = "🆔 e-Okul'dan T.C. Kimlik No Aktar (.xls / .xlsx)";
-        Size = new Size(1020, 720);
-        MinimumSize = new Size(860, 580);
+        Text = "🆔 e-Okul'dan T.C. Kimlik No & Doğum Tarihi Aktar (.xls / .xlsx)";
+        Size = new Size(1100, 720);
+        MinimumSize = new Size(950, 580);
         StartPosition = FormStartPosition.CenterParent;
         BackColor = UITheme.Background;
         Font = new Font("Segoe UI", 9f);
@@ -76,7 +76,7 @@ public class EOkulTcImportDialog : Form
 
         var lblTitle = new Label
         {
-            Text = "🆔 e-Okul'dan T.C. Kimlik Numarası Aktarma",
+            Text = "🆔 e-Okul'dan T.C. Kimlik Numarası & Doğum Tarihi Aktarma",
             Font = new Font("Segoe UI", 12f, FontStyle.Bold),
             ForeColor = UITheme.TextPrimary,
             Location = new Point(20, 8),
@@ -85,7 +85,7 @@ public class EOkulTcImportDialog : Form
 
         var lblSubtitle = new Label
         {
-            Text = "e-Okul'dan indirilen öğrenci bilgi formlarından (Excel .xls / .xlsx) T.C. Kimlik Numaralarını okul numarasına göre otomatik eşleştirip aktarır.",
+            Text = "e-Okul'dan indirilen öğrenci bilgi formlarından (Excel .xls / .xlsx) T.C. Kimlik Numaralarını ve Doğum Tarihlerini okul numarasına göre otomatik eşleştirip aktarır.",
             Font = new Font("Segoe UI", 8.5f),
             ForeColor = UITheme.TextSecondary,
             Location = new Point(20, 32),
@@ -94,7 +94,7 @@ public class EOkulTcImportDialog : Form
 
         var lblEokulNote = new Label
         {
-            Text = "(E-Okul Öğrenci bilgileri YAZDIR ekranından 90 numaralı raporu Excel/Veri olarak indiriniz ve dosyayı seçiniz.)",
+            Text = "(e-Okul Öğrenci Bilgileri > YAZDIR ekranından 90 numaralı raporu veya sınıf listesini Excel/Veri olarak indirip seçiniz.)",
             Font = new Font("Segoe UI", 8.5f, FontStyle.Bold),
             ForeColor = Color.FromArgb(220, 38, 38), // Koyu Kırmızı (Red-600)
             Location = new Point(20, 54),
@@ -247,8 +247,8 @@ public class EOkulTcImportDialog : Form
 
         _btnApply = new Button
         {
-            Text = "💾 T.C. Kimlik Numaralarını Aktar",
-            Size = new Size(230, 36),
+            Text = "💾 T.C. No & Doğum Tarihlerini Aktar",
+            Size = new Size(260, 36),
             BackColor = Color.FromArgb(16, 185, 129), // Emerald-600
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat,
@@ -305,8 +305,8 @@ public class EOkulTcImportDialog : Form
         {
             Name = "colIdx",
             HeaderText = "#",
-            Width = 45,
-            FillWeight = 5,
+            Width = 40,
+            FillWeight = 4,
             DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter }
         });
 
@@ -314,7 +314,7 @@ public class EOkulTcImportDialog : Form
         {
             Name = "colNo",
             HeaderText = "Okul No",
-            Width = 75,
+            Width = 70,
             FillWeight = 8,
             DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter, Font = new Font("Segoe UI", 9f, FontStyle.Bold) }
         });
@@ -323,30 +323,39 @@ public class EOkulTcImportDialog : Form
         {
             Name = "colExcelName",
             HeaderText = "Excel'deki Adı Soyadı",
-            FillWeight = 22
+            FillWeight = 20
         });
 
         _grid.Columns.Add(new DataGridViewTextBoxColumn
         {
             Name = "colSystemStudent",
             HeaderText = "Sistemdeki Öğrenci & Sınıfı",
-            FillWeight = 26
+            FillWeight = 22
         });
 
         _grid.Columns.Add(new DataGridViewTextBoxColumn
         {
             Name = "colTc",
             HeaderText = "T.C. Kimlik No",
-            Width = 120,
-            FillWeight = 15,
+            Width = 115,
+            FillWeight = 13,
             DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter, Font = new Font("Segoe UI", 9f, FontStyle.Bold) }
+        });
+
+        _grid.Columns.Add(new DataGridViewTextBoxColumn
+        {
+            Name = "colBirth",
+            HeaderText = "Doğum Tarihi",
+            Width = 100,
+            FillWeight = 11,
+            DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleCenter }
         });
 
         _grid.Columns.Add(new DataGridViewTextBoxColumn
         {
             Name = "colStatus",
             HeaderText = "Eşleşme Durumu",
-            FillWeight = 24
+            FillWeight = 22
         });
     }
 
@@ -451,11 +460,15 @@ public class EOkulTcImportDialog : Form
                 matched = zeroMatch;
             }
 
+            var birthDt = EOkulClassListParser.ParseTurkishDate(parsed.BirthDate);
+
             var item = new TcMatchItem
             {
                 StudentNumber = parsed.StudentNumber,
                 ExcelName = parsed.FullName,
                 TcKimlikNo = parsed.TcKimlikNo,
+                ExcelBirthDate = parsed.BirthDate,
+                ParsedBirthDate = birthDt,
                 ExistingStudent = matched
             };
 
@@ -465,13 +478,19 @@ public class EOkulTcImportDialog : Form
             }
             else
             {
-                if (string.Equals(matched.TcKimlikNo?.Trim(), parsed.TcKimlikNo.Trim(), StringComparison.OrdinalIgnoreCase))
+                bool tcDiff = !string.IsNullOrWhiteSpace(parsed.TcKimlikNo) &&
+                              !string.Equals(matched.TcKimlikNo?.Trim(), parsed.TcKimlikNo.Trim(), StringComparison.OrdinalIgnoreCase);
+
+                bool birthDiff = birthDt.HasValue &&
+                                 (!matched.BirthDate.HasValue || matched.BirthDate.Value.Date != birthDt.Value.Date);
+
+                if (tcDiff || birthDiff)
                 {
-                    item.Status = TcMatchStatus.AlreadySame;
+                    item.Status = TcMatchStatus.WillUpdate;
                 }
                 else
                 {
-                    item.Status = TcMatchStatus.WillUpdate;
+                    item.Status = TcMatchStatus.AlreadySame;
                 }
             }
 
@@ -498,12 +517,17 @@ public class EOkulTcImportDialog : Form
         int idx = 1;
         foreach (var item in _matchItems)
         {
+            string birthDisplay = item.ParsedBirthDate.HasValue
+                ? item.ParsedBirthDate.Value.ToString("dd.MM.yyyy")
+                : (!string.IsNullOrWhiteSpace(item.ExcelBirthDate) ? item.ExcelBirthDate : "-");
+
             var rowIdx = _grid.Rows.Add(
                 idx++,
                 item.StudentNumber,
                 string.IsNullOrWhiteSpace(item.ExcelName) ? "-" : item.ExcelName,
                 item.SystemName,
                 item.TcKimlikNo,
+                birthDisplay,
                 item.StatusText
             );
 
@@ -536,8 +560,8 @@ public class EOkulTcImportDialog : Form
         }
 
         var confirm = MessageBox.Show(
-            $"Toplam {toUpdate.Count} öğrencinin T.C. Kimlik Numarası sistemde güncellenecektir.\n\nİşlemi onaylıyor musunuz?",
-            "T.C. Kimlik No Aktarım Onayı",
+            $"Toplam {toUpdate.Count} öğrencinin T.C. Kimlik Numarası ve/veya Doğum Tarihi sistemde güncellenecektir.\n\nİşlemi onaylıyor musunuz?",
+            "T.C. Kimlik No & Doğum Tarihi Aktarım Onayı",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Question);
 
@@ -552,7 +576,14 @@ public class EOkulTcImportDialog : Form
             foreach (var item in toUpdate)
             {
                 var student = item.ExistingStudent!;
-                student.TcKimlikNo = item.TcKimlikNo;
+                if (!string.IsNullOrWhiteSpace(item.TcKimlikNo))
+                {
+                    student.TcKimlikNo = item.TcKimlikNo;
+                }
+                if (item.ParsedBirthDate.HasValue)
+                {
+                    student.BirthDate = item.ParsedBirthDate.Value;
+                }
                 await _studentRepo.UpdateAsync(student);
                 updatedCount++;
                 item.Status = TcMatchStatus.AlreadySame;
@@ -563,7 +594,7 @@ public class EOkulTcImportDialog : Form
             PopulateGrid();
 
             var askNotepad = MessageBox.Show(
-                $"İşlem Başarıyla Tamamlandı!\n\nToplam {updatedCount} öğrencinin T.C. Kimlik Numarası sisteme eklendi ve kaydedildi.\n\nDetaylı aktarım raporunu Not Defterinde görüntülemek ister misiniz?",
+                $"İşlem Başarıyla Tamamlandı!\n\nToplam {updatedCount} öğrencinin T.C. Kimlik Numarası / Doğum Tarihi sisteme aktarıldı ve kaydedildi.\n\nDetaylı aktarım raporunu Not Defterinde görüntülemek ister misiniz?",
                 "Aktarım Başarılı",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Information);
@@ -575,7 +606,7 @@ public class EOkulTcImportDialog : Form
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"T.C. Kimlik Numaraları kaydedilirken hata oluştu: {ex.Message}", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show($"Bilgiler kaydedilirken hata oluştu: {ex.Message}", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         finally
         {
@@ -620,12 +651,12 @@ public class EOkulTcImportDialog : Form
     private string GenerateTextReport()
     {
         var sb = new StringBuilder();
-        string divider = new('=', 95);
-        string subDivider = new('-', 95);
+        string divider = new('=', 105);
+        string subDivider = new('-', 105);
 
         sb.AppendLine(divider);
         sb.AppendLine("                   T.C. MİLLÎ EĞİTİM BAKANLIĞI — KOORDİNATÖRLÜK SİSTEMİ");
-        sb.AppendLine("                         E-OKUL T.C. KİMLİK NUMARASI AKTARIM RAPORU");
+        sb.AppendLine("               E-OKUL T.C. KİMLİK NUMARASI & DOĞUM TARİHİ AKTARIM RAPORU");
         sb.AppendLine(divider);
         sb.AppendLine($"Rapor Tarihi / Saat : {DateTime.Now:dd.MM.yyyy HH:mm:ss}");
         sb.AppendLine($"Kaynak Excel Dosyası: {Path.GetFileName(_selectedFilePath ?? "Bilinmiyor")}");
@@ -638,7 +669,7 @@ public class EOkulTcImportDialog : Form
 
         sb.AppendLine($"Toplam Okunan Kayıt Sayısı : {_matchItems.Count}");
         sb.AppendLine($"Eşleşen & Güncellenen      : {willUpdateCount}");
-        sb.AppendLine($"Zaten Güncel (Aynı T.C.)   : {alreadySameCount}");
+        sb.AppendLine($"Zaten Güncel               : {alreadySameCount}");
         sb.AppendLine($"Sistemde Bulunmayan        : {notFoundCount}");
         sb.AppendLine(divider);
         sb.AppendLine();
@@ -647,18 +678,23 @@ public class EOkulTcImportDialog : Form
         var updatedList = _matchItems.Where(m => m.Status == TcMatchStatus.WillUpdate).ToList();
         if (updatedList.Count > 0)
         {
-            sb.AppendLine($"[1] T.C. KİMLİK NUMARASI AKTARILAN / GÜNCELLENEN ÖĞRENCİLER ({updatedList.Count} Öğrenci)");
+            sb.AppendLine($"[1] T.C. KİMLİK / DOĞUM TARİHİ AKTARILAN ÖĞRENCİLER ({updatedList.Count} Öğrenci)");
             sb.AppendLine(subDivider);
-            sb.AppendLine(string.Format("{0,-6} {1,-14} {2,-30} {3,-16} {4}", "NO", "T.C. KİMLİK NO", "ADI SOYADI", "SINIF", "DURUM"));
+            sb.AppendLine(string.Format("{0,-6} {1,-14} {2,-12} {3,-26} {4,-14} {5}", "NO", "T.C. KİMLİK NO", "DOĞUM TRH.", "ADI SOYADI", "SINIF", "DURUM"));
             sb.AppendLine(subDivider);
             foreach (var item in updatedList)
             {
                 var s = item.ExistingStudent!;
-                sb.AppendLine(string.Format("{0,-6} {1,-14} {2,-30} {3,-16} {4}",
+                string bStr = item.ParsedBirthDate.HasValue
+                    ? item.ParsedBirthDate.Value.ToString("dd.MM.yyyy")
+                    : (s.BirthDate.HasValue ? s.BirthDate.Value.ToString("dd.MM.yyyy") : "-");
+
+                sb.AppendLine(string.Format("{0,-6} {1,-14} {2,-12} {3,-26} {4,-14} {5}",
                     item.StudentNumber,
                     item.TcKimlikNo,
-                    Truncate(s.FullName, 28),
-                    Truncate(s.Classroom, 14),
+                    bStr,
+                    Truncate(s.FullName, 24),
+                    Truncate(s.Classroom, 12),
                     "✓ Güncellendi"));
             }
             sb.AppendLine(subDivider);
@@ -669,19 +705,24 @@ public class EOkulTcImportDialog : Form
         var sameList = _matchItems.Where(m => m.Status == TcMatchStatus.AlreadySame).ToList();
         if (sameList.Count > 0)
         {
-            sb.AppendLine($"[2] ZATEN AYNI T.C. NUMARASINA SAHİP OLAN ÖĞRENCİLER ({sameList.Count} Öğrenci)");
+            sb.AppendLine($"[2] ZATEN GÜNCEL BİLGİYE SAHİP OLAN ÖĞRENCİLER ({sameList.Count} Öğrenci)");
             sb.AppendLine(subDivider);
-            sb.AppendLine(string.Format("{0,-6} {1,-14} {2,-30} {3,-16} {4}", "NO", "T.C. KİMLİK NO", "ADI SOYADI", "SINIF", "DURUM"));
+            sb.AppendLine(string.Format("{0,-6} {1,-14} {2,-12} {3,-26} {4,-14} {5}", "NO", "T.C. KİMLİK NO", "DOĞUM TRH.", "ADI SOYADI", "SINIF", "DURUM"));
             sb.AppendLine(subDivider);
             foreach (var item in sameList)
             {
                 var name = item.ExistingStudent?.FullName ?? item.ExcelName;
                 var cls = item.ExistingStudent?.Classroom ?? "-";
-                sb.AppendLine(string.Format("{0,-6} {1,-14} {2,-30} {3,-16} {4}",
+                string bStr = item.ParsedBirthDate.HasValue
+                    ? item.ParsedBirthDate.Value.ToString("dd.MM.yyyy")
+                    : (item.ExistingStudent?.BirthDate.HasValue == true ? item.ExistingStudent.BirthDate.Value.ToString("dd.MM.yyyy") : "-");
+
+                sb.AppendLine(string.Format("{0,-6} {1,-14} {2,-12} {3,-26} {4,-14} {5}",
                     item.StudentNumber,
                     item.TcKimlikNo,
-                    Truncate(name, 28),
-                    Truncate(cls, 14),
+                    bStr,
+                    Truncate(name, 24),
+                    Truncate(cls, 12),
                     "⚪ Zaten Mevcut"));
             }
             sb.AppendLine(subDivider);
@@ -694,14 +735,19 @@ public class EOkulTcImportDialog : Form
         {
             sb.AppendLine($"[3] SİSTEMDE KAYITLI OLMAYAN ÖĞRENCİLER ({notFoundList.Count} Öğrenci)");
             sb.AppendLine(subDivider);
-            sb.AppendLine(string.Format("{0,-6} {1,-14} {2,-30} {3}", "NO", "T.C. KİMLİK NO", "EXCEL'DEKİ ADI SOYADI", "DURUM"));
+            sb.AppendLine(string.Format("{0,-6} {1,-14} {2,-12} {3,-26} {4}", "NO", "T.C. KİMLİK NO", "DOĞUM TRH.", "EXCEL'DEKİ ADI SOYADI", "DURUM"));
             sb.AppendLine(subDivider);
             foreach (var item in notFoundList)
             {
-                sb.AppendLine(string.Format("{0,-6} {1,-14} {2,-30} {3}",
+                string bStr = item.ParsedBirthDate.HasValue
+                    ? item.ParsedBirthDate.Value.ToString("dd.MM.yyyy")
+                    : (!string.IsNullOrWhiteSpace(item.ExcelBirthDate) ? item.ExcelBirthDate : "-");
+
+                sb.AppendLine(string.Format("{0,-6} {1,-14} {2,-12} {3,-26} {4}",
                     item.StudentNumber,
                     item.TcKimlikNo,
-                    Truncate(item.ExcelName, 28),
+                    bStr,
+                    Truncate(item.ExcelName, 24),
                     "🟠 Sistemde Yok"));
             }
             sb.AppendLine(subDivider);
@@ -736,16 +782,32 @@ public class TcMatchItem
     public string StudentNumber { get; set; } = string.Empty;
     public string ExcelName { get; set; } = string.Empty;
     public string TcKimlikNo { get; set; } = string.Empty;
+    public string ExcelBirthDate { get; set; } = string.Empty;
+    public DateTime? ParsedBirthDate { get; set; }
     public Student? ExistingStudent { get; set; }
     public string SystemName => ExistingStudent != null ? $"{ExistingStudent.FullName} ({ExistingStudent.Classroom})" : "-";
     public TcMatchStatus Status { get; set; }
     public string StatusText => Status switch
     {
-        TcMatchStatus.WillUpdate => "🟢 T.C. Kimlik Eklenecek / Güncellenecek",
-        TcMatchStatus.AlreadySame => "⚪ Zaten Güncel (Aynı T.C.)",
+        TcMatchStatus.WillUpdate => GetWillUpdateStatusText(),
+        TcMatchStatus.AlreadySame => "⚪ Zaten Güncel",
         TcMatchStatus.NotFoundInDb => "🟠 Sistemde Bulunamadı",
         _ => "-"
     };
+
+    private string GetWillUpdateStatusText()
+    {
+        bool tcChange = !string.IsNullOrWhiteSpace(TcKimlikNo) &&
+                        !string.Equals(ExistingStudent?.TcKimlikNo?.Trim(), TcKimlikNo.Trim(), StringComparison.OrdinalIgnoreCase);
+
+        bool birthChange = ParsedBirthDate.HasValue &&
+                           (ExistingStudent?.BirthDate == null || ExistingStudent.BirthDate.Value.Date != ParsedBirthDate.Value.Date);
+
+        if (tcChange && birthChange) return "🟢 T.C. No & Doğum Tarihi Güncellenecek";
+        if (tcChange) return "🟢 T.C. Kimlik No Güncellenecek";
+        if (birthChange) return "🟢 Doğum Tarihi Güncellenecek";
+        return "🟢 Güncellenecek";
+    }
 }
 
 public enum TcMatchStatus

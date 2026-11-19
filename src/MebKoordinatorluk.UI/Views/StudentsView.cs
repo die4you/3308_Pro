@@ -160,7 +160,7 @@ public class StudentsView : UserControl
 
         menuImport.Items.Add("📥 e-Okul'dan Sınıf Listesi Aktar (.xls/.xlsx)", null, BtnUploadExcel_Click);
         menuImport.Items.Add("📋 Metin Yapıştırarak Ekle", null, BtnBulkPaste_Click);
-        menuImport.Items.Add("🆔 T.C. Kimlik No Aktar", null, (s, e) =>
+        menuImport.Items.Add("🆔 T.C. Kimlik No & Doğum Tarihi Aktar", null, (s, e) =>
         {
             if (!Common.LicenseUIHelper.CheckFeature("e-Okul'dan T.C. Kimlik No Eşleştirme", this)) return;
             using var dlg = new EOkulTcImportDialog(_studentRepo);

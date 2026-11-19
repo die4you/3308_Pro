@@ -94,4 +94,56 @@ public class EOkulTcKimlikParserTests
         Assert.Equal("Seda Han", st1.FullName);
         Assert.Equal("12-A", st1.Classroom);
     }
+
+    [Fact]
+    public void ParseTableFormat_ShouldExtractStudents_WithBirthDate()
+    {
+        // Arrange - Standart Tablo Formatı Doğum Tarihi ile
+        var grid = new List<List<string>>
+        {
+            new() { "Sıra No", "Okul No", "Adı Soyadı", "T.C. Kimlik No", "Doğum Tarihi", "Sınıf" },
+            new() { "1", "121", "Seda Han", "10274844088", "22.08.1997", "12-A" },
+            new() { "2", "186", "Nazlı Budak", "50920488006", "01/01/2001", "12-B" }
+        };
+
+        // Act
+        var result = EOkulTcKimlikParser.ParseGrid(grid);
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Equal(2, result.TotalStudentsCount);
+
+        var st1 = result.Students.First(s => s.StudentNumber == "121");
+        Assert.Equal("10274844088", st1.TcKimlikNo);
+        Assert.Equal("22.08.1997", st1.BirthDate);
+
+        var parsedDt1 = EOkulTcKimlikParser.ParseTurkishDate(st1.BirthDate);
+        Assert.NotNull(parsedDt1);
+        Assert.Equal(1997, parsedDt1.Value.Year);
+        Assert.Equal(8, parsedDt1.Value.Month);
+        Assert.Equal(22, parsedDt1.Value.Day);
+
+        var st2 = result.Students.First(s => s.StudentNumber == "186");
+        Assert.Equal("01/01/2001", st2.BirthDate);
+        var parsedDt2 = EOkulTcKimlikParser.ParseTurkishDate(st2.BirthDate);
+        Assert.NotNull(parsedDt2);
+        Assert.Equal(2001, parsedDt2.Value.Year);
+        Assert.Equal(1, parsedDt2.Value.Month);
+        Assert.Equal(1, parsedDt2.Value.Day);
+    }
+
+    [Theory]
+    [InlineData("22/08/1997", 1997, 8, 22)]
+    [InlineData("01.01.2001", 2001, 1, 1)]
+    [InlineData("16-07-2012", 2012, 7, 16)]
+    [InlineData("22/08/1997 ANKARA", 1997, 8, 22)]
+    [InlineData("05.10.2005 / İSTANBUL", 2005, 10, 5)]
+    public void ParseTurkishDate_ShouldParseVariousFormats(string input, int year, int month, int day)
+    {
+        var dt = EOkulTcKimlikParser.ParseTurkishDate(input);
+        Assert.NotNull(dt);
+        Assert.Equal(year, dt.Value.Year);
+        Assert.Equal(month, dt.Value.Month);
+        Assert.Equal(day, dt.Value.Day);
+    }
 }

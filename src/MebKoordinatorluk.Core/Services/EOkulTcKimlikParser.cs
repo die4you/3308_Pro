@@ -217,6 +217,7 @@ public static class EOkulTcKimlikParser
         int colTc = -1;
         int colName = -1;
         int colClass = -1;
+        int colBirth = -1;
 
         for (int r = 0; r < Math.Min(grid.Count, 25); r++)
         {
@@ -240,6 +241,10 @@ public static class EOkulTcKimlikParser
                 {
                     colClass = c;
                 }
+                else if (IsBirthDateLabel(norm) || norm == "DOĞUM TARİHİ" || norm == "DOGUM TARIHI" || norm == "D.TARİHİ" || norm == "D.TARIHI" || norm == "DOĞUM" || norm == "DOGUM")
+                {
+                    colBirth = c;
+                }
             }
 
             if (colNo >= 0 && colTc >= 0)
@@ -261,6 +266,7 @@ public static class EOkulTcKimlikParser
             string tcVal = colTc < row.Count ? row[colTc] : "";
             string nameVal = colName >= 0 && colName < row.Count ? row[colName] : "";
             string classVal = colClass >= 0 && colClass < row.Count ? row[colClass] : "";
+            string birthVal = colBirth >= 0 && colBirth < row.Count ? row[colBirth] : "";
 
             string cleanNo = CleanNumber(noVal);
             string cleanTc = CleanTc(tcVal);
@@ -272,7 +278,8 @@ public static class EOkulTcKimlikParser
                     StudentNumber = cleanNo,
                     TcKimlikNo = cleanTc,
                     FullName = CleanText(nameVal),
-                    Classroom = CleanText(classVal)
+                    Classroom = CleanText(classVal),
+                    BirthDate = CleanText(birthVal)
                 });
             }
         }
@@ -323,10 +330,18 @@ public static class EOkulTcKimlikParser
                norm.StartsWith("ŞUBESİ");
     }
 
+    public static DateTime? ParseTurkishDate(string text) => EOkulClassListParser.ParseTurkishDate(text);
+
     private static bool IsBirthDateLabel(string norm)
     {
         return norm.StartsWith("DOĞUM TARİHİ") ||
-               norm.StartsWith("D TARİHİ");
+               norm.StartsWith("D TARİHİ") ||
+               norm.StartsWith("DOĞUM TARIHI") ||
+               norm.StartsWith("DOGUM TARIHI") ||
+               norm.StartsWith("D.TARİHİ") ||
+               norm.StartsWith("D.TARIHI") ||
+               norm.StartsWith("DOĞUM") ||
+               norm.StartsWith("DOGUM");
     }
 
     private static bool IsGenderLabel(string norm)
