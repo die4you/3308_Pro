@@ -26,8 +26,7 @@ if (Test-Path $icoSource) {
 # Data klasörü (Sıfır / temiz başlangıç veritabanı şablonu)
 $scDataDir = Join-Path $scDir "Data"
 if (-not (Test-Path $scDataDir)) { New-Item -ItemType Directory -Path $scDataDir | Out-Null }
-$existingDb = Join-Path $scDataDir "meb_koordinatorluk.db"
-if (Test-Path $existingDb) { Remove-Item -Path $existingDb -Force }
+Get-ChildItem -Path $scDataDir -Filter "*.db*" | Remove-Item -Force -ErrorAction SilentlyContinue
 
 Write-Host "3. Inno Setup Kurulum Sihirbazı Betiği Hazırlanıyor..." -ForegroundColor Cyan
 $setupDir = Join-Path $distDir "Kurulum_Sihirbazi"
@@ -42,7 +41,7 @@ $issContent = @"
 ; Inno Setup 6 Kurulum Betiği
 
 #define MyAppName "3308 Pro"
-#define MyAppVersion "2.4"
+#define MyAppVersion "2.6"
 #define MyAppPublisher "TRGY CYMZ"
 #define MyAppExeName "3308_Pro.exe"
 
@@ -55,7 +54,7 @@ DefaultDirName=C:\3308_Pro
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=..\
-OutputBaseFilename=3308_Pro_Kurulum_v2.4
+OutputBaseFilename=3308_Pro_Kurulum_v2.6
 SetupIconFile=app.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
@@ -104,7 +103,7 @@ if (-not $isccExe) {
 Write-Host "Inno Setup bulundu: $isccExe" -ForegroundColor Green
 & $isccExe $issPath
 
-$outputInstaller = Join-Path $distDir "3308_Pro_Kurulum_v2.4.exe"
+$outputInstaller = Join-Path $distDir "3308_Pro_Kurulum_v2.6.exe"
 if (Test-Path $outputInstaller) {
     $item = Get-Item $outputInstaller
     $sizeMb = [math]::Round($item.Length / 1MB, 2)
