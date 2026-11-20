@@ -21,6 +21,9 @@ public class StudentEditDialog : Form
     private TextBox _txtNumber = null!;
     private TextBox _txtName = null!;
     private TextBox _txtTcNo = null!;
+    private TextBox _txtParentName = null!;
+    private TextBox _txtPhone = null!;
+    private TextBox _txtParentPhone = null!;
     private TextBox _txtIban = null!;
     private ComboBox _cmbGender = null!;
     private DateTimePicker _dtpBirthDate = null!;
@@ -173,6 +176,42 @@ public class StudentEditDialog : Form
         };
         btnCleanBirth.FlatAppearance.BorderSize = 0;
         btnCleanBirth.Click += (s, e) => { _dtpBirthDate.CustomFormat = " "; UpdateAgeDisplay(); EvaluateSgkPrimFormula(); MarkAsDirty(); };
+        y += 38;
+
+        // Veli ve İletişim Bilgileri (Telefon 1 / Telefon 2)
+        var lblParentName = new Label { Text = "👨‍👩‍👧 Veli Adı Soyadı", Location = new Point(28, y), AutoSize = true, Font = new Font("Segoe UI", 9f, FontStyle.Bold) };
+        var lblPhone = new Label { Text = "📱 Telefon 1 (Öğrenci)", Location = new Point(320, y), AutoSize = true, Font = new Font("Segoe UI", 9f, FontStyle.Bold) };
+        var lblParentPhone = new Label { Text = "📞 Telefon 2 (Veli)", Location = new Point(512, y), AutoSize = true, Font = new Font("Segoe UI", 9f, FontStyle.Bold) };
+        y += 24;
+
+        _txtParentName = new TextBox
+        {
+            Location = new Point(28, y),
+            Width = 280,
+            Font = new Font("Segoe UI", 9.5f),
+            PlaceholderText = "Veli Adı Soyadı"
+        };
+        _txtParentName.TextChanged += (s, e) => MarkAsDirty();
+
+        _txtPhone = new TextBox
+        {
+            Location = new Point(320, y),
+            Width = 180,
+            Font = new Font("Segoe UI", 9.5f),
+            PlaceholderText = "05xx xxx xx xx",
+            MaxLength = 20
+        };
+        _txtPhone.TextChanged += (s, e) => MarkAsDirty();
+
+        _txtParentPhone = new TextBox
+        {
+            Location = new Point(512, y),
+            Width = 184,
+            Font = new Font("Segoe UI", 9.5f),
+            PlaceholderText = "05xx xxx xx xx",
+            MaxLength = 20
+        };
+        _txtParentPhone.TextChanged += (s, e) => MarkAsDirty();
         y += 38;
 
         // Öğrenci IBAN Numarası
@@ -444,6 +483,8 @@ public class StudentEditDialog : Form
             _txtNumber, _txtName,
             lblTcNo, lblGender, lblBirthDate,
             _txtTcNo, _cmbGender, _dtpBirthDate, btnCleanBirth,
+            lblParentName, lblPhone, lblParentPhone,
+            _txtParentName, _txtPhone, _txtParentPhone,
             lblIban, _txtIban,
             lblClass, lblEduType, lblField,
             _cmbClass, _cmbEducationType, _cmbField,
@@ -554,6 +595,9 @@ public class StudentEditDialog : Form
                 _txtNumber.Text = _existingStudent.StudentNumber;
                 _txtName.Text = _existingStudent.FullName;
                 _txtTcNo.Text = _existingStudent.TcKimlikNo ?? "";
+                _txtParentName.Text = _existingStudent.ParentName ?? "";
+                _txtPhone.Text = _existingStudent.Phone ?? "";
+                _txtParentPhone.Text = _existingStudent.ParentPhone ?? "";
                 _txtIban.Text = _existingStudent.Iban ?? "";
 
                 SetDateValue(_dtpBirthDate, _existingStudent.BirthDate);
@@ -656,6 +700,9 @@ public class StudentEditDialog : Form
             else
             {
                 _txtTcNo.Text = "";
+                _txtParentName.Text = "";
+                _txtPhone.Text = "";
+                _txtParentPhone.Text = "";
                 _txtIban.Text = "";
                 _dtpBirthDate.CustomFormat = " ";
                 
@@ -1143,8 +1190,9 @@ public class StudentEditDialog : Form
             TeacherName = teacherName,
             DutyDays = dutyDays,
             FeeCategory = _existingStudent?.FeeCategory ?? "kat1",
-            Phone = _existingStudent?.Phone,
-            ParentPhone = _existingStudent?.ParentPhone,
+            ParentName = string.IsNullOrWhiteSpace(_txtParentName.Text) ? null : _txtParentName.Text.Trim(),
+            Phone = string.IsNullOrWhiteSpace(_txtPhone.Text) ? null : _txtPhone.Text.Trim(),
+            ParentPhone = string.IsNullOrWhiteSpace(_txtParentPhone.Text) ? null : _txtParentPhone.Text.Trim(),
             IsActive = _existingStudent?.IsActive ?? true
         };
 

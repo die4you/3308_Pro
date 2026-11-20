@@ -15,6 +15,8 @@ public class ClassListPrintOptions
     public bool ShowField { get; set; } = true;
     public bool ShowEnterprise { get; set; } = true;
     public bool ShowGender { get; set; } = true;
+    public bool ShowPhone { get; set; } = false;
+    public bool ShowParentContact { get; set; } = false;
     public bool ShowSignatureColumn { get; set; } = false;
     public bool Landscape { get; set; } = false;
 
@@ -238,10 +240,18 @@ public static class ClassListPrintHelper
             "gender" => string.IsNullOrWhiteSpace(s.Gender) ? "-" : s.Gender,
             "field" => string.IsNullOrWhiteSpace(s.FieldName) ? "-" : s.FieldName,
             "enterprise" => string.IsNullOrWhiteSpace(s.EnterpriseName) ? "-" : s.EnterpriseName,
+            "phone" => string.IsNullOrWhiteSpace(s.Phone) ? "-" : s.Phone,
+            "parent" => FormatParentContact(s),
             "signature" => "",
             "custom" => "",
             _ => ""
         };
+    }
+
+    private static string FormatParentContact(Student s)
+    {
+        var parts = new[] { s.ParentName, s.ParentPhone }.Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
+        return parts.Count > 0 ? string.Join(" - ", parts) : "-";
     }
 
     private class ColumnDef
@@ -281,6 +291,16 @@ public static class ClassListPrintHelper
         if (opts.ShowEnterprise)
         {
             cols.Add(new ColumnDef { Key = "enterprise", Title = "Staj İşletmesi", Width = 135, AlignLeft = true });
+        }
+
+        if (opts.ShowPhone)
+        {
+            cols.Add(new ColumnDef { Key = "phone", Title = "Öğrenci Tel", Width = 95, AlignLeft = false });
+        }
+
+        if (opts.ShowParentContact)
+        {
+            cols.Add(new ColumnDef { Key = "parent", Title = "Veli (Ad & Tel)", Width = 130, AlignLeft = true });
         }
 
         if (opts.ShowSignatureColumn)
@@ -366,7 +386,7 @@ public static class ClassListPrintHelper
                 int overflow = (otherColsWidth + 110) - totalWidth;
                 if (overflow > 0)
                 {
-                    var flexibleCols = cols.Where(c => c.Key is "enterprise" or "field" or "custom").ToList();
+                    var flexibleCols = cols.Where(c => c.Key is "enterprise" or "field" or "custom" or "parent" or "phone").ToList();
                     int perColReduce = overflow / Math.Max(1, flexibleCols.Count);
                     foreach (var fc in flexibleCols)
                     {

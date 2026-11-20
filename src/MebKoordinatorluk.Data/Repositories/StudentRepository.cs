@@ -137,8 +137,8 @@ public class StudentRepository : IStudentRepository
         await EnsureValidDepartmentIdAsync(conn, student);
 
         const string sql = @"
-            INSERT INTO Students (TcKimlikNo, Iban, StudentNumber, FirstName, LastName, DepartmentId, ClassId, Classroom, Grade, FieldId, FieldName, EnterpriseId, EnterpriseName, TeacherId, TeacherName, InternshipDays, DutyDays, FeeCategory, EducationType, BirthDate, SgkEntryDate, SgkExitDate, SgkPrimKodu, Gender, HasFamilyHealthInsurance, EducationPlace, Phone, ParentPhone, Notes, IsActive, IsSurekliDevamsiz, IsgStatus, IsgCertificateDate, IsgCertificateNo, IsgSecurityNo, IsIsgDocumentPrinted)
-            VALUES (@TcKimlikNo, @Iban, @StudentNumber, @FirstName, @LastName, @DepartmentId, @ClassId, @Classroom, @Grade, @FieldId, @FieldName, @EnterpriseId, @EnterpriseName, @TeacherId, @TeacherName, @InternshipDays, @DutyDays, @FeeCategory, @EducationType, @BirthDate, @SgkEntryDate, @SgkExitDate, @SgkPrimKodu, @Gender, @HasFamilyHealthInsurance, @EducationPlace, @Phone, @ParentPhone, @Notes, @IsActive, @IsSurekliDevamsiz, @IsgStatus, @IsgCertificateDate, @IsgCertificateNo, @IsgSecurityNo, @IsIsgDocumentPrinted);
+            INSERT INTO Students (TcKimlikNo, Iban, StudentNumber, FirstName, LastName, DepartmentId, ClassId, Classroom, Grade, FieldId, FieldName, EnterpriseId, EnterpriseName, TeacherId, TeacherName, InternshipDays, DutyDays, FeeCategory, EducationType, BirthDate, SgkEntryDate, SgkExitDate, SgkPrimKodu, Gender, HasFamilyHealthInsurance, EducationPlace, Phone, ParentName, ParentPhone, Notes, IsActive, IsSurekliDevamsiz, IsgStatus, IsgCertificateDate, IsgCertificateNo, IsgSecurityNo, IsIsgDocumentPrinted)
+            VALUES (@TcKimlikNo, @Iban, @StudentNumber, @FirstName, @LastName, @DepartmentId, @ClassId, @Classroom, @Grade, @FieldId, @FieldName, @EnterpriseId, @EnterpriseName, @TeacherId, @TeacherName, @InternshipDays, @DutyDays, @FeeCategory, @EducationType, @BirthDate, @SgkEntryDate, @SgkExitDate, @SgkPrimKodu, @Gender, @HasFamilyHealthInsurance, @EducationPlace, @Phone, @ParentName, @ParentPhone, @Notes, @IsActive, @IsSurekliDevamsiz, @IsgStatus, @IsgCertificateDate, @IsgCertificateNo, @IsgSecurityNo, @IsIsgDocumentPrinted);
             SELECT last_insert_rowid();";
         return await conn.ExecuteScalarAsync<int>(sql, student);
     }
@@ -177,6 +177,7 @@ public class StudentRepository : IStudentRepository
                 HasFamilyHealthInsurance = @HasFamilyHealthInsurance,
                 EducationPlace = @EducationPlace,
                 Phone = @Phone,
+                ParentName = @ParentName,
                 ParentPhone = @ParentPhone,
                 Notes = @Notes,
                 IsActive = @IsActive,

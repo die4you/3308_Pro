@@ -41,7 +41,7 @@ $issContent = @"
 ; Inno Setup 6 Kurulum Betiği
 
 #define MyAppName "3308 Pro"
-#define MyAppVersion "2.6"
+#define MyAppVersion "2.7"
 #define MyAppPublisher "TRGY CYMZ"
 #define MyAppExeName "3308_Pro.exe"
 
@@ -54,7 +54,7 @@ DefaultDirName=C:\3308_Pro
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=..\
-OutputBaseFilename=3308_Pro_Kurulum_v2.6
+OutputBaseFilename=3308_Pro_Kurulum_v2.7
 SetupIconFile=app.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
@@ -103,7 +103,7 @@ if (-not $isccExe) {
 Write-Host "Inno Setup bulundu: $isccExe" -ForegroundColor Green
 & $isccExe $issPath
 
-$outputInstaller = Join-Path $distDir "3308_Pro_Kurulum_v2.6.exe"
+$outputInstaller = Join-Path $distDir "3308_Pro_Kurulum_v2.7.exe"
 if (Test-Path $outputInstaller) {
     $item = Get-Item $outputInstaller
     $sizeMb = [math]::Round($item.Length / 1MB, 2)

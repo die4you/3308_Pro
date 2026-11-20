@@ -336,30 +336,13 @@ public class MainForm : Form
             Font = new Font("Segoe UI", 9f, FontStyle.Bold),
             Cursor = Cursors.Hand,
             Margin = new Padding(8, 0, 0, 0),
-            Padding = new Padding(10, 0, 10, 0)
+            Padding = new Padding(10, 0, 10, 0),
+            Visible = false
         };
         _btnLicenseBadge.FlatAppearance.BorderSize = 0;
         _btnLicenseBadge.Click += (s, e) => OpenLicenseActivationDialog();
 
-        var btnSupport = new Button
-        {
-            Text = "📞 İletişim & Destek",
-            AutoSize = true,
-            Height = 36,
-            MinimumSize = new Size(130, 36),
-            BackColor = Color.FromArgb(29, 78, 216), // blue-700
-            ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat,
-            Font = new Font("Segoe UI", 9f, FontStyle.Bold),
-            Cursor = Cursors.Hand,
-            Margin = new Padding(8, 0, 0, 0),
-            Padding = new Padding(10, 0, 10, 0)
-        };
-        btnSupport.FlatAppearance.BorderSize = 0;
-        btnSupport.FlatAppearance.MouseOverBackColor = Color.FromArgb(37, 99, 235);
-        btnSupport.Click += (s, e) => SwitchTab("contact-support");
-
-        pnlHeaderRight.Controls.AddRange([btnLogout, btnUserBadge, btnExportExcel, _btnLicenseBadge, btnSupport]);
+        pnlHeaderRight.Controls.AddRange([btnLogout, btnUserBadge, btnExportExcel, _btnLicenseBadge]);
 
         _pnlHeader.Controls.Add(pnlHeaderLeft);
         _pnlHeader.Controls.Add(pnlHeaderRight);
@@ -458,12 +441,12 @@ public class MainForm : Form
         AddSidebarCategory("🏫 OKUL TANIMLARI", [
             ("classes", "🏫", "Sınıflar & Şubeler", (Action)(() => SwitchTab("classes"))),
             ("fields", "📚", "Alan / Dal Tanımları", (Action)(() => SwitchTab("fields"))),
-            ("address-groups", "📍", "Adres Grupları", (Action)(() => SwitchTab("address-groups"))),
-            ("enterprises", "🏢", "Staj İşletmeleri", (Action)(() => SwitchTab("enterprises")))
+            ("enterprises", "🏢", "Staj İşletmeleri", (Action)(() => SwitchTab("enterprises"))),
+            ("address-groups", "📍", "Adres Grupları", (Action)(() => SwitchTab("address-groups")))
         ]);
 
-        // Category 3: ÖĞRENCİ & ÖĞRETMEN TANIMLARI
-        AddSidebarCategory("👥 ÖĞRENCİ & ÖĞRETMEN TANIMLARI", [
+        // Category 3: ÖĞR & ÖĞRT TANIMLARI
+        AddSidebarCategory("👥 ÖĞR & ÖĞRT TANIMLARI", [
             ("students", "🎓", "Öğrenci Listesi", (Action)(() => SwitchTab("students"))),
             ("student-archive", "🗄️", "Öğrenci Arşivi", (Action)(() => SwitchTab("student-archive"))),
             ("teachers", "👨‍🏫", "Koordinatör Öğretmenler", (Action)(() => SwitchTab("teachers")))
@@ -1366,12 +1349,12 @@ public class MainForm : Form
         {
             if (lic.RemainingDays > 30)
             {
-                _btnLicenseBadge.Text = "🟢 Lisanslı";
-                _btnLicenseBadge.BackColor = Color.FromArgb(5, 150, 105); // emerald-600
-                _btnLicenseBadge.FlatAppearance.MouseOverBackColor = Color.FromArgb(4, 120, 87);
+                // Lisans aktif ve 30 günden fazla süre var: üst bar temizliği için rozet gizlenir
+                _btnLicenseBadge.Visible = false;
             }
             else
             {
+                _btnLicenseBadge.Visible = true;
                 _btnLicenseBadge.Text = $"⚠️ Lisans Bitiyor ({lic.RemainingDays} Gün)";
                 _btnLicenseBadge.BackColor = Color.FromArgb(217, 119, 6); // amber-600
                 _btnLicenseBadge.FlatAppearance.MouseOverBackColor = Color.FromArgb(180, 83, 9);
@@ -1379,18 +1362,21 @@ public class MainForm : Form
         }
         else if (lic.Status == LicenseStatus.Expired)
         {
+            _btnLicenseBadge.Visible = true;
             _btnLicenseBadge.Text = "⚠️ Süresi Doldu (Demo)";
             _btnLicenseBadge.BackColor = Color.FromArgb(220, 38, 38); // red-600
             _btnLicenseBadge.FlatAppearance.MouseOverBackColor = Color.FromArgb(185, 28, 28);
         }
         else if (lic.Status == LicenseStatus.TamperedClock)
         {
+            _btnLicenseBadge.Visible = true;
             _btnLicenseBadge.Text = "⛔ Tarih Hilesi (Kilitli)";
             _btnLicenseBadge.BackColor = Color.FromArgb(185, 28, 28);
             _btnLicenseBadge.FlatAppearance.MouseOverBackColor = Color.FromArgb(153, 27, 27);
         }
         else
         {
+            _btnLicenseBadge.Visible = true;
             _btnLicenseBadge.Text = "🚀 Tam Sürüme Yükselt (Demo)";
             _btnLicenseBadge.BackColor = Color.FromArgb(234, 88, 12); // vibrant orange-600
             _btnLicenseBadge.FlatAppearance.MouseOverBackColor = Color.FromArgb(194, 65, 12);

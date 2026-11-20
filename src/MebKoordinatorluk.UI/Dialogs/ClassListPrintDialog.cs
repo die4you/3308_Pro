@@ -32,6 +32,8 @@ public class ClassListPrintDialog : Form
     private CheckBox _chkShowGender = null!;
     private CheckBox _chkShowField = null!;
     private CheckBox _chkShowEnterprise = null!;
+    private CheckBox _chkShowPhone = null!;
+    private CheckBox _chkShowParentContact = null!;
     private CheckBox _chkShowSignature = null!;
 
     // Özel Sütun Kontrolleri
@@ -63,7 +65,7 @@ public class ClassListPrintDialog : Form
     private void InitializeComponent()
     {
         Text = "🖨️ Sınıf Listeleri Yazdırma Seçenekleri";
-        Size = new Size(540, 595);
+        Size = new Size(540, 620);
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
@@ -190,7 +192,7 @@ public class ClassListPrintDialog : Form
             Text = "Gösterilecek Standart Sütunlar",
             Font = new Font("Segoe UI", 9f, FontStyle.Bold),
             Location = new Point(20, 180),
-            Size = new Size(470, 94)
+            Size = new Size(470, 116)
         };
 
         _chkShowTcNo = new CheckBox
@@ -229,22 +231,40 @@ public class ClassListPrintDialog : Form
             AutoSize = true
         };
 
-        _chkShowSignature = new CheckBox
+        _chkShowPhone = new CheckBox
         {
-            Text = "Yoklama / İmza Sütunu Eklensin",
+            Text = "Öğrenci Telefonu (Tel 1) Gösterilsin",
             Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
             Checked = false,
             Location = new Point(16, 66),
             AutoSize = true
         };
-        grpColumns.Controls.AddRange([_chkShowTcNo, _chkShowGender, _chkShowField, _chkShowEnterprise, _chkShowSignature]);
+
+        _chkShowParentContact = new CheckBox
+        {
+            Text = "Veli Bilgisi (Ad & Tel 2) Gösterilsin",
+            Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
+            Checked = false,
+            Location = new Point(230, 66),
+            AutoSize = true
+        };
+
+        _chkShowSignature = new CheckBox
+        {
+            Text = "Yoklama / İmza Sütunu Eklensin",
+            Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
+            Checked = false,
+            Location = new Point(16, 88),
+            AutoSize = true
+        };
+        grpColumns.Controls.AddRange([_chkShowTcNo, _chkShowGender, _chkShowField, _chkShowEnterprise, _chkShowPhone, _chkShowParentContact, _chkShowSignature]);
 
         // 5. Custom Column Group (Özel / Boş Sütun Ekleme)
         var grpCustomCol = new GroupBox
         {
-            Text = "Özel Sütun Ekle (Veli Adı Soyadı, Not, İmza vb.)",
+            Text = "Özel Sütun Ekle (Not, İmza vb.)",
             Font = new Font("Segoe UI", 9f, FontStyle.Bold),
-            Location = new Point(20, 280),
+            Location = new Point(20, 304),
             Size = new Size(470, 105)
         };
 
@@ -471,6 +491,8 @@ public class ClassListPrintDialog : Form
             ShowGender = _chkShowGender.Checked,
             ShowField = _chkShowField.Checked,
             ShowEnterprise = _chkShowEnterprise.Checked,
+            ShowPhone = _chkShowPhone.Checked,
+            ShowParentContact = _chkShowParentContact.Checked,
             ShowSignatureColumn = _chkShowSignature.Checked,
             AddCustomColumn = _chkCustomColumn.Checked,
             CustomColumnTitle = string.IsNullOrWhiteSpace(_cmbCustomColumnTitle.Text) ? "Özel Sütun" : _cmbCustomColumnTitle.Text.Trim(),
@@ -584,6 +606,8 @@ public class ClassListPrintDialog : Form
                 bool showGender = _chkShowGender.Checked;
                 bool showField = _chkShowField.Checked;
                 bool showEnterprise = _chkShowEnterprise.Checked;
+                bool showPhone = _chkShowPhone.Checked;
+                bool showParent = _chkShowParentContact.Checked;
                 bool showSig = _chkShowSignature.Checked;
                 bool addCustom = _chkCustomColumn.Checked;
                 string customTitle = string.IsNullOrWhiteSpace(_cmbCustomColumnTitle.Text) ? "Özel Sütun" : _cmbCustomColumnTitle.Text.Trim();
@@ -601,6 +625,8 @@ public class ClassListPrintDialog : Form
                 if (showGender) headerCols.Add(("gender", "Cinsiyet"));
                 if (showField) headerCols.Add(("field", "Alan / Dal"));
                 if (showEnterprise) headerCols.Add(("enterprise", "Staj İşletmesi"));
+                if (showPhone) headerCols.Add(("phone", "Öğrenci Telefonu"));
+                if (showParent) headerCols.Add(("parent", "Veli (Ad & Tel)"));
                 if (showSig) headerCols.Add(("signature", "İmza / Yoklama"));
 
                 if (addCustom)
@@ -663,6 +689,10 @@ public class ClassListPrintDialog : Form
                                 "gender" => s.Gender ?? "",
                                 "field" => s.FieldName ?? "",
                                 "enterprise" => s.EnterpriseName ?? "",
+                                "phone" => s.Phone ?? "",
+                                "parent" => (!string.IsNullOrWhiteSpace(s.ParentName) || !string.IsNullOrWhiteSpace(s.ParentPhone))
+                                                ? string.Join(" - ", new[] { s.ParentName, s.ParentPhone }.Where(p => !string.IsNullOrWhiteSpace(p)))
+                                                : "",
                                 "signature" => "",
                                 "custom" => "",
                                 _ => ""

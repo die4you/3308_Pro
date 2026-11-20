@@ -187,6 +187,7 @@ public class DatabaseInitializer
                 HasFamilyHealthInsurance INTEGER DEFAULT 1,
                 EducationPlace TEXT DEFAULT 'İşletmede (Staj)',
                 Phone TEXT,
+                ParentName TEXT,
                 ParentPhone TEXT,
                 Notes TEXT,
                 IsActive INTEGER NOT NULL DEFAULT 1
@@ -407,6 +408,9 @@ public class DatabaseInitializer
         AddColumnIfNotExists(connection, "Students", "Gender", "TEXT DEFAULT 'Erkek'");
         AddColumnIfNotExists(connection, "Students", "HasFamilyHealthInsurance", "INTEGER DEFAULT 1");
         AddColumnIfNotExists(connection, "Students", "EducationPlace", "TEXT DEFAULT 'İşletmede (Staj)'");
+        AddColumnIfNotExists(connection, "Students", "Phone", "TEXT");
+        AddColumnIfNotExists(connection, "Students", "ParentName", "TEXT");
+        AddColumnIfNotExists(connection, "Students", "ParentPhone", "TEXT");
         AddColumnIfNotExists(connection, "Students", "Notes", "TEXT");
         AddColumnIfNotExists(connection, "Students", "IsSurekliDevamsiz", "INTEGER DEFAULT 0");
         AddColumnIfNotExists(connection, "Students", "IsgStatus", "TEXT DEFAULT 'Sertifikasız (Eksik)'");

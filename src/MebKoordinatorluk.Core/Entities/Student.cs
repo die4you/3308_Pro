@@ -43,6 +43,7 @@ public class Student : BaseEntity
         }
     }
     public string? Phone { get; set; }
+    public string? ParentName { get; set; }
     public string? ParentPhone { get; set; }
     public string? Notes { get; set; }
     public bool IsSurekliDevamsiz { get; set; } = false;

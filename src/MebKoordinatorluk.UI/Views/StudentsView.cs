@@ -914,7 +914,10 @@ public class StudentsView : UserControl
                        Matches(s.FieldName) ||
                        Matches(s.EnterpriseName) ||
                        Matches(s.TeacherName) ||
-                       Matches(s.Iban);
+                       Matches(s.Iban) ||
+                       Matches(s.ParentName) ||
+                       Matches(s.Phone) ||
+                       Matches(s.ParentPhone);
             }
 
             if (!isAllClasses && !string.IsNullOrWhiteSpace(selectedClass) && !s.Classroom.Equals(selectedClass, StringComparison.OrdinalIgnoreCase))
@@ -1059,6 +1062,15 @@ public class StudentsView : UserControl
             if (!string.IsNullOrWhiteSpace(s.Iban))
             {
                 tooltipParts.Add($"🏦 Öğrenci IBAN: {s.Iban}");
+            }
+            if (!string.IsNullOrWhiteSpace(s.Phone))
+            {
+                tooltipParts.Add($"📱 Öğrenci Tel: {s.Phone}");
+            }
+            if (!string.IsNullOrWhiteSpace(s.ParentName) || !string.IsNullOrWhiteSpace(s.ParentPhone))
+            {
+                var veliParts = new[] { s.ParentName, s.ParentPhone }.Where(p => !string.IsNullOrWhiteSpace(p));
+                tooltipParts.Add($"👨‍👩‍👧 Veli: {string.Join(" - ", veliParts)}");
             }
             _grid.Rows[rowIndex].Cells["colNameClass"].ToolTipText = string.Join(Environment.NewLine, tooltipParts);
         }

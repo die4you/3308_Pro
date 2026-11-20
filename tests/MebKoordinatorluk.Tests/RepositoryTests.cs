@@ -228,6 +228,51 @@ public class RepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task StudentRepository_AddAndGetWithParentAndPhoneFields_ShouldPersistCorrectly()
+    {
+        // Arrange
+        var repo = new StudentRepository(_factory);
+        var student = new Student
+        {
+            StudentNumber = "5555",
+            FirstName = "Ayşe",
+            LastName = "Kaya",
+            Classroom = "11-B",
+            TcKimlikNo = "11122233344",
+            Phone = "05321112233",
+            ParentName = "Mehmet Kaya",
+            ParentPhone = "05334445566",
+            Iban = "TR120006200000012345678901",
+            IsActive = true
+        };
+
+        // Act
+        var id = await repo.AddAsync(student);
+        var retrieved = await repo.GetByIdAsync(id);
+
+        // Assert
+        Assert.True(id > 0);
+        Assert.NotNull(retrieved);
+        Assert.Equal("05321112233", retrieved.Phone);
+        Assert.Equal("Mehmet Kaya", retrieved.ParentName);
+        Assert.Equal("05334445566", retrieved.ParentPhone);
+        Assert.Equal("TR120006200000012345678901", retrieved.Iban);
+
+        // Test update
+        retrieved.ParentName = "Fatma Kaya";
+        retrieved.Phone = "05559998877";
+        retrieved.ParentPhone = "05556667788";
+        var updated = await repo.UpdateAsync(retrieved);
+        Assert.True(updated);
+
+        var reloaded = await repo.GetByIdAsync(id);
+        Assert.NotNull(reloaded);
+        Assert.Equal("Fatma Kaya", reloaded.ParentName);
+        Assert.Equal("05559998877", reloaded.Phone);
+        Assert.Equal("05556667788", reloaded.ParentPhone);
+    }
+
+    [Fact]
     public async Task AttendanceRepository_SaveAndGetBlankCodes_ShouldPersistCorrectly()
     {
         // Arrange

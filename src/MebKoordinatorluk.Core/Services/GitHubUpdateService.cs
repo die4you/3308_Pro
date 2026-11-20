@@ -8,7 +8,7 @@ public class UpdateCheckResult
 {
     public bool Success { get; set; }
     public bool IsUpdateAvailable { get; set; }
-    public string CurrentVersion { get; set; } = "2.6";
+    public string CurrentVersion { get; set; } = "2.7.0";
     public string LatestVersion { get; set; } = "";
     public string ReleaseTitle { get; set; } = "";
     public string ReleaseNotes { get; set; } = "";
@@ -31,7 +31,7 @@ public class UpdateCheckResult
 
 public class GitHubUpdateService
 {
-    public const string CurrentVersion = "2.6";
+    public const string CurrentVersion = "2.7.0";
     public const string RepoOwner = "die4you";
     public const string RepoName = "3308_Pro";
 
@@ -179,20 +179,28 @@ public class GitHubUpdateService
 
     public static Version ParseVersion(string raw)
     {
-        if (string.IsNullOrWhiteSpace(raw)) return new Version(1, 0, 0);
+        if (string.IsNullOrWhiteSpace(raw)) return new Version(0, 0, 0, 0);
 
         raw = raw.Trim().TrimStart('v', 'V');
-        if (Version.TryParse(raw, out var v)) return v;
+        if (Version.TryParse(raw, out var v))
+        {
+            return new Version(
+                Math.Max(0, v.Major),
+                Math.Max(0, v.Minor),
+                Math.Max(0, v.Build),
+                Math.Max(0, v.Revision));
+        }
 
-        var match = Regex.Match(raw, @"^(\d+)(?:\.(\d+))?(?:\.(\d+))?");
+        var match = Regex.Match(raw, @"^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?");
         if (match.Success)
         {
             int major = int.Parse(match.Groups[1].Value);
             int minor = match.Groups[2].Success ? int.Parse(match.Groups[2].Value) : 0;
             int build = match.Groups[3].Success ? int.Parse(match.Groups[3].Value) : 0;
-            return new Version(major, minor, build);
+            int revision = match.Groups[4].Success ? int.Parse(match.Groups[4].Value) : 0;
+            return new Version(major, minor, build, revision);
         }
 
-        return new Version(1, 0, 0);
+        return new Version(0, 0, 0, 0);
     }
 }
