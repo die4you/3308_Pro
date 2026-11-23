@@ -178,6 +178,15 @@ public class StudentsView : UserControl
                 _ = RefreshStudentsAsync();
             }
         });
+        menuImport.Items.Add("📞 Öğrenci & Veli Telefonu Aktar", null, (s, e) =>
+        {
+            if (!Common.LicenseUIHelper.CheckFeature("Excel'den Telefon Eşleştirme", this)) return;
+            using var dlg = new StudentPhoneImportDialog(_studentRepo);
+            if (dlg.ShowDialog(this) == DialogResult.OK && dlg.ImportedCount > 0)
+            {
+                _ = RefreshStudentsAsync();
+            }
+        });
         menuImport.Items.Add(new ToolStripSeparator());
         menuImport.Items.Add("🖨️ Toplu Sınıf Listeleri Yazdır", null, (s, e) =>
         {

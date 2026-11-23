@@ -508,6 +508,7 @@ public class MainForm : Form
                 ("student-audit", "🔍", "Öğrenci Kontrolü", (Action)OpenStudentAuditDialog),
                 ("import-tc", "🆔", "e-Okul TCKN / D.Tarihi", (Action)OpenEOkulTcImport),
                 ("import-iban", "💳", "Öğrenci IBAN Yükle", (Action)OpenStudentIbanImport),
+                ("import-phone", "📞", "Öğrenci / Veli Telefon Yükle", (Action)OpenStudentPhoneImport),
                 ("import-bulk", "📋", "Toplu Öğrenci Ekle", (Action)OpenBulkStudentsDialog)
             ]);
         }
@@ -792,6 +793,16 @@ public class MainForm : Form
             SwitchTab("students");
         }
 
+    }
+
+    private void OpenStudentPhoneImport()
+    {
+        using var dlg = new Dialogs.StudentPhoneImportDialog(_studentRepo);
+        if (dlg.ShowDialog(this) == DialogResult.OK && dlg.ImportedCount > 0)
+        {
+            if (_studentsView != null) _ = _studentsView.RefreshStudentsAsync();
+            SwitchTab("students");
+        }
     }
 
     private void OpenBulkStudentsDialog()

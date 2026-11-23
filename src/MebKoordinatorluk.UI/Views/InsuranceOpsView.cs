@@ -3967,29 +3967,41 @@ public class InsuranceOpsView : UserControl
         // - Bulunduğumuz dönemde (çıkış ayı) çıkış tarihinden sonraki günler eksik gün sayılmaz, yalnızca fiili devamsızlıklar eksik gündür.
         // - Önceki dönemde veya giriş ayında ayın başındaki boşluklar '13 Diğer Nedenler' ile eksik gün bildirilir.
         int activeDaysInMonth;
+        int paidDays;
         if (entryInThisMonth && exitInThisMonth)
         {
             int spanDays = Math.Max(0, s.SgkExitDate!.Value.Day - s.SgkEntryDate!.Value.Day + 1);
             activeDaysInMonth = Math.Min(totalMonthDays, spanDays);
             missingDays = absentDays;
+            paidDays = Math.Max(0, activeDaysInMonth - absentDays);
         }
         else if (entryInThisMonth)
         {
             activeDaysInMonth = Math.Max(0, totalMonthDays - entryMissingDays);
             missingDays = entryMissingDays + absentDays;
+            paidDays = Math.Max(0, activeDaysInMonth - absentDays);
         }
         else if (exitInThisMonth)
         {
             activeDaysInMonth = Math.Min(totalMonthDays, s.SgkExitDate!.Value.Day);
             missingDays = absentDays;
+            paidDays = Math.Max(0, activeDaysInMonth - absentDays);
         }
         else
         {
-            activeDaysInMonth = totalMonthDays;
-            missingDays = absentDays;
-        }
+            // Tam ay (Önceki dönem veya ay içi giriş/çıkış olmayan dönem):
+            // SGK 2020/20 Genelgesi ve SgkCalculationHelper parmak hesabı kuralları uygulanır.
+            // 31 çeken aylarda 2 ve üzeri devamsızlıkta takvim gününden (31) düşülür (örn: 31 - 5 = 26 gün prim, 5 eksik gün).
+            var sgkRes = MebKoordinatorluk.Core.Services.SgkCalculationHelper.Calculate(
+                year,
+                month,
+                null,
+                null,
+                absentDays);
 
-        int paidDays = Math.Max(0, activeDaysInMonth - absentDays);
+            paidDays = sgkRes.BildirilecekPrimGunu;
+            missingDays = sgkRes.BildirilecekEksikGun;
+        }
 
         // 4. Hak Edilen Ücret hesabı:
         // Çıkış tarihine kadar (veya girişten itibaren) çalışılan gün sayısına göre Günlük PEK * paidDays olarak hesaplanır.

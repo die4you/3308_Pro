@@ -195,4 +195,31 @@ public class SgkExitXmlTests
         Assert.NotNull(studentExitDone.SgkExitDate);
         Assert.Equal(new DateTime(2026, 10, 15), studentExitDone.SgkExitDate.Value);
     }
+
+    [Fact]
+    public void SgkExitXml_PreviousPeriodWith31DaysAnd5DaysAbsence_ShouldCalculate26PaidDaysAnd14313Pek()
+    {
+        // 2026 Ekim ayı (31 gün): 5 gün devamsızlık olduğunda 31 - 5 = 26 prim günü bildirilmeli.
+        // Brüt 33.030,00 TL üzerinden Günlük PEK: 550,50 TL => 26 * 550,50 = 14.313,00 TL.
+        int year = 2026;
+        int month = 10;
+        int absentDays = 5;
+
+        var sgkRes = MebKoordinatorluk.Core.Services.SgkCalculationHelper.Calculate(
+            year,
+            month,
+            null,
+            null,
+            absentDays);
+
+        Assert.Equal(26, sgkRes.BildirilecekPrimGunu);
+        Assert.Equal(5, sgkRes.BildirilecekEksikGun);
+
+        decimal grossWage = 33030.00m;
+        decimal monthlyWage = Math.Round(grossWage / 2.0m, 2);
+        decimal dailyWage = monthlyWage / 30.0m;
+        decimal earnedWage = Math.Round(dailyWage * sgkRes.BildirilecekPrimGunu, 2);
+
+        Assert.Equal(14313.00m, earnedWage);
+    }
 }
