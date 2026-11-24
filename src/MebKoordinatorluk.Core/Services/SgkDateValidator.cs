@@ -108,4 +108,48 @@ public static class SgkDateValidator
         errorMessage = string.Empty;
         return true;
     }
+
+    /// <summary>
+    /// Bir öğrencinin SGK İşe Giriş XML bildirimine uygun olup olmadığını denetler.
+    /// Kural: İşe giriş tarihi tanımlı olmalı, ancak öğrencinin işten çıkış tarihi (staj ilişiği sonlandırması) OLMAMALIDIR.
+    /// </summary>
+    public static bool IsEligibleForEntryXml(DateTime? entryDate, DateTime? exitDate, out string? errorMessage)
+    {
+        if (!entryDate.HasValue)
+        {
+            errorMessage = "İşe giriş tarihi tanımlı değil.";
+            return false;
+        }
+
+        if (exitDate.HasValue)
+        {
+            errorMessage = $"Öğrencinin işten çıkış tarihi ({exitDate.Value:dd.MM.yyyy}) bulunduğu için (staj ilişiği sonlandırıldığından) işe giriş bildirgesi üretilemez.";
+            return false;
+        }
+
+        errorMessage = null;
+        return true;
+    }
+
+    /// <summary>
+    /// Bir öğrencinin SGK İşten Çıkış XML bildirimine uygun olup olmadığını denetler.
+    /// Kural: İşten çıkış tarihi tanımlı olmalı ve eğer giriş tarihi varsa çıkış tarihi giriş tarihinden önce olmamalıdır.
+    /// </summary>
+    public static bool IsEligibleForExitXml(DateTime? entryDate, DateTime? exitDate, out string? errorMessage)
+    {
+        if (!exitDate.HasValue)
+        {
+            errorMessage = "İşten çıkış tarihi tanımlı değil.";
+            return false;
+        }
+
+        if (entryDate.HasValue && exitDate.Value.Date < entryDate.Value.Date)
+        {
+            errorMessage = $"İşten çıkış tarihi ({exitDate.Value:dd.MM.yyyy}), işe giriş tarihinden ({entryDate.Value:dd.MM.yyyy}) önce olamaz.";
+            return false;
+        }
+
+        errorMessage = null;
+        return true;
+    }
 }

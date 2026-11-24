@@ -482,6 +482,7 @@ public class DatabaseInitializer
             {
                 new { Key = "Valilik", Value = "", Description = "İl Valiliği / Kaymakamlık", UpdatedDate = now },
                 new { Key = "DistrictMem", Value = "", Description = "İl / İlçe Millî Eğitim Müdürlüğü", UpdatedDate = now },
+                new { Key = "KurumKodu", Value = "", Description = "Kurum Kodu (MEBBİS)", UpdatedDate = now },
                 new { Key = "SchoolName", Value = "", Description = "Okul / Kurum Resmi Adı", UpdatedDate = now },
                 new { Key = "SayiNo", Value = "", Description = "Resmi Yazı Sayı No", UpdatedDate = now },
                 new { Key = "FormDate", Value = DateTime.Now.ToString("dd/MM/yyyy"), Description = "Yazı Tarihi", UpdatedDate = now },

@@ -8,7 +8,7 @@ public class UpdateCheckResult
 {
     public bool Success { get; set; }
     public bool IsUpdateAvailable { get; set; }
-    public string CurrentVersion { get; set; } = "2.8.0";
+    public string CurrentVersion { get; set; } = "2.9.0";
     public string LatestVersion { get; set; } = "";
     public string ReleaseTitle { get; set; } = "";
     public string ReleaseNotes { get; set; } = "";
@@ -31,7 +31,7 @@ public class UpdateCheckResult
 
 public class GitHubUpdateService
 {
-    public const string CurrentVersion = "2.8.0";
+    public const string CurrentVersion = "2.9.0";
     public const string RepoOwner = "die4you";
     public const string RepoName = "3308_Pro";
 
@@ -119,7 +119,7 @@ public class GitHubUpdateService
             var remoteVer = ParseVersion(tagName);
 
             result.Success = true;
-            result.LatestVersion = tagName.TrimStart('v', 'V');
+            result.LatestVersion = tagName.Trim().TrimStart('v', 'V', '.', ' ');
             result.ReleaseTitle = string.IsNullOrWhiteSpace(title) ? $"Sürüm {tagName}" : title;
             result.ReleaseNotes = body;
             result.DownloadUrl = downloadUrl;
@@ -181,7 +181,7 @@ public class GitHubUpdateService
     {
         if (string.IsNullOrWhiteSpace(raw)) return new Version(0, 0, 0, 0);
 
-        raw = raw.Trim().TrimStart('v', 'V');
+        raw = raw.Trim().TrimStart('v', 'V', '.', ' ').Trim();
         if (Version.TryParse(raw, out var v))
         {
             return new Version(
@@ -191,7 +191,7 @@ public class GitHubUpdateService
                 Math.Max(0, v.Revision));
         }
 
-        var match = Regex.Match(raw, @"^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?");
+        var match = Regex.Match(raw, @"(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:\.(\d+))?");
         if (match.Success)
         {
             int major = int.Parse(match.Groups[1].Value);

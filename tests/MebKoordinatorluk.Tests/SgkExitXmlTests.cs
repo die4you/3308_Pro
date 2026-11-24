@@ -222,4 +222,34 @@ public class SgkExitXmlTests
 
         Assert.Equal(14313.00m, earnedWage);
     }
+
+    [Fact]
+    public void SgkExitXml_MidMonthEntryInPreviousPeriod_ShouldNotCountDaysBeforeEntryAsMissing()
+    {
+        // Buket YILMAZ senaryosu:
+        // İşe Giriş: 19/10/2026, Çıkış: 24/11/2026
+        // Ekim 2026 (Önceki Dönem, 31 gün):
+        // 19-31 Ekim arası aktif takvim günü: 31 - 19 + 1 = 13 gündür.
+        // Ayın 1'i ile 18'i arası işe başlanmadığı için EKSİK GÜN DEĞİLDİR!
+        
+        var entryDate = new DateTime(2026, 10, 19);
+
+        // 1. Durum: 19 Ekim'den sonra 0 devamsızlık
+        var res0 = MebKoordinatorluk.Core.Services.SgkCalculationHelper.Calculate(
+            2026, 10, entryDate, null, 0);
+        Assert.Equal(13, res0.BildirilecekPrimGunu);
+        Assert.Equal(0, res0.BildirilecekEksikGun);
+
+        // 2. Durum: 19 Ekim'den sonra 1 gün devamsızlık
+        var res1 = MebKoordinatorluk.Core.Services.SgkCalculationHelper.Calculate(
+            2026, 10, entryDate, null, 1);
+        Assert.Equal(12, res1.BildirilecekPrimGunu);
+        Assert.Equal(1, res1.BildirilecekEksikGun);
+
+        // 3. Durum: 19 Ekim'den sonra 2 gün devamsızlık
+        var res2 = MebKoordinatorluk.Core.Services.SgkCalculationHelper.Calculate(
+            2026, 10, entryDate, null, 2);
+        Assert.Equal(11, res2.BildirilecekPrimGunu);
+        Assert.Equal(2, res2.BildirilecekEksikGun);
+    }
 }

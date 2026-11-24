@@ -1057,7 +1057,7 @@ public class MainForm : Form
             // ── 1. ÖĞRENCİLER SAYFASI ──────────────────────────────────────
             var wsSt = wb.Worksheets.Add("Öğrenciler");
             string[] stHeaders = [
-                "No", "T.C. Kimlik No", "Öğrenci No", "Adı Soyadı", "Sınıf / Şube",
+                "No", "T.C. Kimlik No", "Öğrenci No", "Adı Soyadı", "Doğum Tarihi", "Yaşı", "Sınıf / Şube",
                 "Mesleki Alan / Dal", "Kayıtlı İşletme", "Koordinatör Öğretmen",
                 "Öğretim Türü", "SGK Durumu", "SGK Prim Kodu", "Staj Günleri",
                 "Görev Günü", "Ücret Kategorisi", "Durum"
@@ -1082,32 +1082,40 @@ public class MainForm : Form
                 wsSt.Cell(rSt, 4).SetValue(s.FullName);
                 wsSt.Cell(rSt, 4).Style.Font.Bold = true;
 
-                wsSt.Cell(rSt, 5).SetValue(s.Classroom ?? "");
+                string birthStr = s.BirthDate.HasValue ? s.BirthDate.Value.ToString("dd.MM.yyyy") : "-";
+                wsSt.Cell(rSt, 5).SetValue(birthStr);
                 wsSt.Cell(rSt, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                wsSt.Cell(rSt, 6).SetValue(s.FieldName ?? "");
-                wsSt.Cell(rSt, 7).SetValue(s.EnterpriseName ?? "Atanmadı");
-                wsSt.Cell(rSt, 8).SetValue(s.TeacherName ?? "Atanmadı");
+                string ageStr = s.Age.HasValue ? s.Age.Value.ToString() : "-";
+                wsSt.Cell(rSt, 6).SetValue(ageStr);
+                wsSt.Cell(rSt, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                wsSt.Cell(rSt, 9).SetValue(s.EducationType ?? "Örgün Eğitim");
-                wsSt.Cell(rSt, 9).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                wsSt.Cell(rSt, 7).SetValue(s.Classroom ?? "");
+                wsSt.Cell(rSt, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                string sgkDurum = s.HasFamilyHealthInsurance ? "Bakmakla Yükümlü (Sağlık Var)" : "Yükümlü Olmayan (Sağlık Yok)";
-                wsSt.Cell(rSt, 10).SetValue(sgkDurum);
-                wsSt.Cell(rSt, 10).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                wsSt.Cell(rSt, 8).SetValue(s.FieldName ?? "");
+                wsSt.Cell(rSt, 9).SetValue(s.EnterpriseName ?? "Atanmadı");
+                wsSt.Cell(rSt, 10).SetValue(s.TeacherName ?? "Atanmadı");
 
-                wsSt.Cell(rSt, 11).SetValue(s.SgkPrimKodu ?? "");
+                wsSt.Cell(rSt, 11).SetValue(s.EducationType ?? "Örgün Eğitim");
                 wsSt.Cell(rSt, 11).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                wsSt.Cell(rSt, 12).SetValue(s.InternshipDays ?? "");
-                wsSt.Cell(rSt, 13).SetValue(s.DutyDays ?? "");
+                string sgkDurum = s.HasFamilyHealthInsurance ? "Bakmakla Yükümlü (Sağlık Var)" : "Yükümlü Olmayan (Sağlık Yok)";
+                wsSt.Cell(rSt, 12).SetValue(sgkDurum);
+                wsSt.Cell(rSt, 12).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                wsSt.Cell(rSt, 13).SetValue(s.SgkPrimKodu ?? "");
                 wsSt.Cell(rSt, 13).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
-                wsSt.Cell(rSt, 14).SetValue(s.FeeCategory == "kat2" ? "%50" : "%30");
-                wsSt.Cell(rSt, 14).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-
-                wsSt.Cell(rSt, 15).SetValue(s.IsSurekliDevamsiz ? "Sürekli Devamsız" : (s.IsActive ? "Aktif" : "Pasif"));
+                wsSt.Cell(rSt, 14).SetValue(s.InternshipDays ?? "");
+                wsSt.Cell(rSt, 15).SetValue(s.DutyDays ?? "");
                 wsSt.Cell(rSt, 15).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                wsSt.Cell(rSt, 16).SetValue(s.FeeCategory == "kat2" ? "%50" : "%30");
+                wsSt.Cell(rSt, 16).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                wsSt.Cell(rSt, 17).SetValue(s.IsSurekliDevamsiz ? "Sürekli Devamsız" : (s.IsActive ? "Aktif" : "Pasif"));
+                wsSt.Cell(rSt, 17).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
 
                 if ((rSt % 2) == 1) wsSt.Range(rSt, 1, rSt, stHeaders.Length).Style.Fill.BackgroundColor = XLColor.FromArgb(248, 250, 252);
                 wsSt.Row(rSt).Height = 20;
@@ -1202,7 +1210,18 @@ public class MainForm : Form
 
                 wsEnt.Cell(rEnt, 6).SetValue($"{eItem.District ?? ""} / {eItem.City ?? ""}".Trim(' ', '/'));
 
-                wsEnt.Cell(rEnt, 7).SetValue(eItem.TeacherName ?? "Atanmadı");
+                string assignedTeacher = eItem.TeacherName ?? "";
+                if (string.IsNullOrWhiteSpace(assignedTeacher))
+                {
+                    var teachersAtEnt = students
+                        .Where(s => s.EnterpriseId == eItem.Id && !string.IsNullOrWhiteSpace(s.TeacherName))
+                        .Select(s => s.TeacherName!.Trim())
+                        .Distinct()
+                        .ToList();
+                    assignedTeacher = teachersAtEnt.Count > 0 ? string.Join(", ", teachersAtEnt) : "Atanmadı";
+                }
+
+                wsEnt.Cell(rEnt, 7).SetValue(assignedTeacher);
 
                 wsEnt.Cell(rEnt, 8).SetValue(studentCount);
                 wsEnt.Cell(rEnt, 8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;

@@ -148,4 +148,77 @@ public class SgkDateValidatorTests
         Assert.True(valid);
         Assert.Empty(error);
     }
+
+    [Fact]
+    public void IsEligibleForEntryXml_StudentWithExitDate_Fails()
+    {
+        var entryDate = new DateTime(2026, 9, 15);
+        var exitDate = new DateTime(2026, 10, 16);
+
+        bool eligible = SgkDateValidator.IsEligibleForEntryXml(entryDate, exitDate, out var error);
+
+        Assert.False(eligible);
+        Assert.Contains("işten çıkış tarihi", error);
+        Assert.Contains("üretilemez", error);
+    }
+
+    [Fact]
+    public void IsEligibleForEntryXml_ActiveStudentWithoutExitDate_Passes()
+    {
+        var entryDate = new DateTime(2026, 9, 15);
+        DateTime? exitDate = null;
+
+        bool eligible = SgkDateValidator.IsEligibleForEntryXml(entryDate, exitDate, out var error);
+
+        Assert.True(eligible);
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void IsEligibleForEntryXml_MissingEntryDate_Fails()
+    {
+        DateTime? entryDate = null;
+        DateTime? exitDate = null;
+
+        bool eligible = SgkDateValidator.IsEligibleForEntryXml(entryDate, exitDate, out var error);
+
+        Assert.False(eligible);
+        Assert.Contains("tanımlı değil", error);
+    }
+
+    [Fact]
+    public void IsEligibleForExitXml_StudentWithoutExitDate_Fails()
+    {
+        var entryDate = new DateTime(2026, 9, 15);
+        DateTime? exitDate = null;
+
+        bool eligible = SgkDateValidator.IsEligibleForExitXml(entryDate, exitDate, out var error);
+
+        Assert.False(eligible);
+        Assert.Contains("tanımlı değil", error);
+    }
+
+    [Fact]
+    public void IsEligibleForExitXml_ExitDateBeforeEntryDate_Fails()
+    {
+        var entryDate = new DateTime(2026, 10, 15);
+        var exitDate = new DateTime(2026, 10, 1);
+
+        bool eligible = SgkDateValidator.IsEligibleForExitXml(entryDate, exitDate, out var error);
+
+        Assert.False(eligible);
+        Assert.Contains("önce olamaz", error);
+    }
+
+    [Fact]
+    public void IsEligibleForExitXml_ValidExitDate_Passes()
+    {
+        var entryDate = new DateTime(2026, 9, 15);
+        var exitDate = new DateTime(2026, 10, 20);
+
+        bool eligible = SgkDateValidator.IsEligibleForExitXml(entryDate, exitDate, out var error);
+
+        Assert.True(eligible);
+        Assert.Null(error);
+    }
 }

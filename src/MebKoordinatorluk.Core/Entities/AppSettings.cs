@@ -4,6 +4,7 @@ public class AppSettings
 {
     public string Valilik { get; set; } = "İSTANBUL VALİLİĞİ";
     public string DistrictMem { get; set; } = "İlçe Millî Eğitim Müdürlüğü";
+    public string KurumKodu { get; set; } = "";
     public string SchoolName { get; set; } = "MİMAR SİNAN MESLEKİ VE TEKNİK ANADOLU LİSESİ";
     public string SayiNo { get; set; } = "E-84125896-121.01-4587";
     public string FormDate { get; set; } = DateTime.Now.ToString("dd/MM/yyyy");
@@ -70,6 +71,7 @@ public class AppSettings
         : $"{SchoolDistrict} / {SchoolCity}".Trim(' ', '/');
 
     // Compatibility Property Aliases
+    public string SchoolCode { get => KurumKodu; set => KurumKodu = value; }
     public string DistrictGovernorate { get => Valilik; set => Valilik = value; }
     public string IlceMem { get => DistrictMem; set => DistrictMem = value; }
     public string OfficialLetterNumber { get => SayiNo; set => SayiNo = value; }

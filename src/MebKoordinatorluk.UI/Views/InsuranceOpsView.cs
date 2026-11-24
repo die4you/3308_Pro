@@ -1534,13 +1534,13 @@ public class InsuranceOpsView : UserControl
 
     /// <summary>
     /// XML İşe Giriş / Çıkış ekranında bir kaydın aktif (işlem bekleyen) olup olmadığını belirler.
-    /// İşe giriş tarihi bugün veya gelecekte olanlar ile,
+    /// İşe giriş tarihi bugün veya gelecekte olan (ve henüz çıkışı verilmemiş) olanlar ile,
     /// SGK çıkış tarihi geriye dönük 10 gün öncesine kadar (yasal bildirim süresi içinde) olanlar aktiftir.
     /// </summary>
     private static bool IsActiveSgkRecord(Student s, DateTime today)
     {
         var tenDaysAgo = today.AddDays(-10);
-        bool entryActive = s.SgkEntryDate.HasValue && s.SgkEntryDate.Value.Date >= today;
+        bool entryActive = s.SgkEntryDate.HasValue && !s.SgkExitDate.HasValue && s.SgkEntryDate.Value.Date >= today;
         bool exitActive = s.SgkExitDate.HasValue && s.SgkExitDate.Value.Date >= tenDaysAgo;
         return entryActive || exitActive;
     }
@@ -1864,7 +1864,7 @@ public class InsuranceOpsView : UserControl
                     if (IsActiveSgkRecord(s, today))
                     {
                         DateTime minActive = DateTime.MaxValue;
-                        if (s.SgkEntryDate.HasValue && s.SgkEntryDate.Value.Date >= today)
+                        if (s.SgkEntryDate.HasValue && !s.SgkExitDate.HasValue && s.SgkEntryDate.Value.Date >= today)
                             minActive = s.SgkEntryDate.Value.Date;
                         if (s.SgkExitDate.HasValue && s.SgkExitDate.Value.Date >= tenDaysAgo && s.SgkExitDate.Value.Date < minActive)
                             minActive = s.SgkExitDate.Value.Date;
@@ -2095,7 +2095,7 @@ public class InsuranceOpsView : UserControl
                         row.DefaultCellStyle.BackColor = Color.White;
                         row.DefaultCellStyle.ForeColor = Color.FromArgb(15, 23, 42); // slate-900
 
-                        if (s.SgkEntryDate.HasValue && s.SgkEntryDate.Value.Date >= today)
+                        if (s.SgkEntryDate.HasValue && !s.SgkExitDate.HasValue && s.SgkEntryDate.Value.Date >= today)
                         {
                             row.Cells["SgkEntryDate"].Style.ForeColor = Color.FromArgb(5, 150, 105); // emerald-600
                             row.Cells["SgkEntryDate"].Style.Font = new Font(_grid.Font, FontStyle.Bold);
@@ -3353,10 +3353,28 @@ public class InsuranceOpsView : UserControl
             int totalSelected = selectedStudents.Count;
             if (!isEntry)
             {
-                // SGK İşten Çıkış Dökümü: SADECE işten çıkış tarihi tanımlı olan öğrenciler işleme alınır
-                var validWithExit = selectedStudents.Where(s => s.SgkExitDate.HasValue).ToList();
+                // SGK İşten Çıkış Dökümü: SADECE işten çıkış tarihi tanımlı olan ve tutarlı öğrenciler işleme alınır
+                var validWithExit = selectedStudents.Where(s =>
+                    s.SgkExitDate.HasValue &&
+                    (!s.SgkEntryDate.HasValue || s.SgkExitDate.Value.Date >= s.SgkEntryDate.Value.Date)).ToList();
+
+                var studentsWithoutExit = selectedStudents.Where(s => !s.SgkExitDate.HasValue).ToList();
+                var studentsWithInvalidDates = selectedStudents.Where(s =>
+                    s.SgkExitDate.HasValue && s.SgkEntryDate.HasValue && s.SgkExitDate.Value.Date < s.SgkEntryDate.Value.Date).ToList();
+
                 if (validWithExit.Count == 0)
                 {
+                    if (studentsWithInvalidDates.Count > 0)
+                    {
+                        MessageBox.Show(
+                            "Seçilen öğrencilerin 'İşten Çıkış Tarihi', 'İşe Giriş Tarihi'nden önce olarak görünmektedir!\n\n" +
+                            "Tarih tutarsızlığı olan kayıtlar için SGK İşten Çıkış XML'i üretilemez. Lütfen tarihleri kontrol ediniz.",
+                            "Geçersiz Çıkış Tarihi Sıralaması",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                        return;
+                    }
+
                     MessageBox.Show(
                         "Seçilen öğrenciler arasında 'İşten Çıkış Tarihi' tanımlı olan öğrenci bulunamadı!\n\n" +
                         "SGK İşten Çıkış dökümü/XML'i yalnızca işten çıkış tarihi olan öğrencileri kapsar. " +
@@ -3369,11 +3387,20 @@ public class InsuranceOpsView : UserControl
 
                 if (validWithExit.Count < totalSelected)
                 {
-                    int excluded = totalSelected - validWithExit.Count;
+                    var msgExit = new System.Text.StringBuilder();
+                    msgExit.AppendLine($"Seçilen {totalSelected} öğrencinin {validWithExit.Count} tanesi İşten Çıkış XML bildirimi için uygundur.\n");
+                    if (studentsWithoutExit.Count > 0)
+                    {
+                        msgExit.AppendLine($"• {studentsWithoutExit.Count} aktif öğrencinin 'İşten Çıkış Tarihi' tanımlı olmadığı için çıkış dökümünden hariç tutulacaktır.");
+                    }
+                    if (studentsWithInvalidDates.Count > 0)
+                    {
+                        msgExit.AppendLine($"• {studentsWithInvalidDates.Count} öğrencinin çıkış tarihi giriş tarihinden önce olduğu için güvenlik nedeniyle hariç tutulacaktır.");
+                    }
+                    msgExit.AppendLine($"\nYalnızca geçerli işten çıkış kaydı olan {validWithExit.Count} öğrenci için devam etmek istiyor musunuz?");
+
                     var confirm = MessageBox.Show(
-                        $"Seçilen {totalSelected} öğrencinin {validWithExit.Count} tanesinde 'İşten Çıkış Tarihi' bulunmaktadır.\n\n" +
-                        $"Çıkış tarihi olmayan {excluded} aktif öğrenci güvenlik gerekçesiyle çıkış dökümünden hariç tutulacaktır.\n\n" +
-                        $"Yalnızca işten çıkış tarihi olan {validWithExit.Count} öğrenci için devam etmek istiyor musunuz?",
+                        msgExit.ToString(),
                         "İşten Çıkış Dökümü Güvenlik Filtresi",
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Question);
@@ -3388,13 +3415,28 @@ public class InsuranceOpsView : UserControl
             }
             else
             {
-                // SGK İşe Giriş Dökümü: SADECE işe giriş tarihi tanımlı olan öğrenciler işleme alınır
-                var validWithEntry = selectedStudents.Where(s => s.SgkEntryDate.HasValue).ToList();
+                // SGK İşe Giriş Dökümü: SADECE işe giriş tarihi tanımlı olan VE İŞTEN ÇIKIŞI BULUNMAYAN öğrenciler işleme alınır
+                var validWithEntry = selectedStudents.Where(s => s.SgkEntryDate.HasValue && !s.SgkExitDate.HasValue).ToList();
+                var studentsWithExit = selectedStudents.Where(s => s.SgkExitDate.HasValue).ToList();
+                var studentsWithoutEntry = selectedStudents.Where(s => !s.SgkEntryDate.HasValue).ToList();
+
                 if (validWithEntry.Count == 0)
                 {
+                    if (studentsWithExit.Count > 0)
+                    {
+                        MessageBox.Show(
+                            "Seçilen öğrencilerin tamamında 'İşten Çıkış Tarihi' tanımlıdır (staj ilişiği kesilmiştir)!\n\n" +
+                            "SGK İşten Çıkış tarihi girilmiş olan öğrencilere güvenlik gerekçesiyle İşe Giriş Bildirgesi XML'i üretilemez.\n\n" +
+                            "İşe Giriş Bildirgesi yalnızca stajı devam eden veya yeni başlayacak aktif öğrenciler için düzenlenebilir.",
+                            "İşe Giriş Bildirgesi Üretilemez",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                        return;
+                    }
+
                     MessageBox.Show(
-                        "Seçilen öğrenciler arasında 'İşe Giriş Tarihi' tanımlı olan öğrenci bulunamadı!\n\n" +
-                        "SGK İşe Giriş dökümü/XML'i yalnızca işe giriş tarihi olan öğrencileri kapsar.",
+                        "Seçilen öğrenciler arasında geçerli 'İşe Giriş Tarihi' tanımlı olan öğrenci bulunamadı!\n\n" +
+                        "SGK İşe Giriş dökümü/XML'i yalnızca işe giriş tarihi olan ve çıkış verilmemiş aktif öğrencileri kapsar.",
                         "İşe Giriş Tarihi Bulunamadı",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
@@ -3403,11 +3445,20 @@ public class InsuranceOpsView : UserControl
 
                 if (validWithEntry.Count < totalSelected)
                 {
-                    int excluded = totalSelected - validWithEntry.Count;
+                    var msgEntry = new System.Text.StringBuilder();
+                    msgEntry.AppendLine($"Seçilen {totalSelected} öğrencinin {validWithEntry.Count} tanesi İşe Giriş XML bildirimi için uygundur.\n");
+                    if (studentsWithExit.Count > 0)
+                    {
+                        msgEntry.AppendLine($"• {studentsWithExit.Count} öğrencinin 'İşten Çıkış Tarihi' bulunduğu için (staj ilişiği sonlandırıldığından) İşe Giriş XML'ine dahil edilmeyecektir.");
+                    }
+                    if (studentsWithoutEntry.Count > 0)
+                    {
+                        msgEntry.AppendLine($"• {studentsWithoutEntry.Count} öğrencinin 'İşe Giriş Tarihi' tanımlı olmadığı için hariç tutulacaktır.");
+                    }
+                    msgEntry.AppendLine($"\nYalnızca aktif ve çıkış kaydı bulunmayan {validWithEntry.Count} öğrenci için devam etmek istiyor musunuz?");
+
                     var confirm = MessageBox.Show(
-                        $"Seçilen {totalSelected} öğrencinin {validWithEntry.Count} tanesinde 'İşe Giriş Tarihi' bulunmaktadır.\n\n" +
-                        $"Giriş tarihi olmayan {excluded} öğrenci hariç tutulacaktır.\n\n" +
-                        $"Yalnızca işe giriş tarihi olan {validWithEntry.Count} öğrenci için devam etmek istiyor musunuz?",
+                        msgEntry.ToString(),
                         "İşe Giriş Dökümü Güvenlik Filtresi",
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Question);
@@ -3938,13 +3989,8 @@ public class InsuranceOpsView : UserControl
                                s.SgkExitDate.Value.Year == year &&
                                s.SgkExitDate.Value.Month == month;
 
-        int entryMissingDays = 0;
-        if (entryInThisMonth)
-        {
-            // Eğer öğrencinin bu dönemde başlama tarihi var ise,
-            // ayın 1'inden işe başlama gününe kadarki günler eksik gün sayılır (örn: 15'inde başladıysa 15-1=14 eksik gün).
-            entryMissingDays = Math.Max(0, s.SgkEntryDate!.Value.Day - 1);
-        }
+        DateTime? calcEntry = entryInThisMonth ? s.SgkEntryDate : null;
+        DateTime? calcExit = exitInThisMonth ? s.SgkExitDate : null;
 
         // 3. Devamsızlık (Yoklama) kayıtlarından gelen devamsızlık günleri:
         var studentAtt = attendance.Where(a => a.StudentId == s.Id).ToList();
@@ -3963,45 +4009,17 @@ public class InsuranceOpsView : UserControl
         }
         int absentDays = (int)Math.Round(absentCount);
 
-        // SGK İşten Çıkış Bildirgesi kuralı:
-        // - Bulunduğumuz dönemde (çıkış ayı) çıkış tarihinden sonraki günler eksik gün sayılmaz, yalnızca fiili devamsızlıklar eksik gündür.
-        // - Önceki dönemde veya giriş ayında ayın başındaki boşluklar '13 Diğer Nedenler' ile eksik gün bildirilir.
-        int activeDaysInMonth;
-        int paidDays;
-        if (entryInThisMonth && exitInThisMonth)
-        {
-            int spanDays = Math.Max(0, s.SgkExitDate!.Value.Day - s.SgkEntryDate!.Value.Day + 1);
-            activeDaysInMonth = Math.Min(totalMonthDays, spanDays);
-            missingDays = absentDays;
-            paidDays = Math.Max(0, activeDaysInMonth - absentDays);
-        }
-        else if (entryInThisMonth)
-        {
-            activeDaysInMonth = Math.Max(0, totalMonthDays - entryMissingDays);
-            missingDays = entryMissingDays + absentDays;
-            paidDays = Math.Max(0, activeDaysInMonth - absentDays);
-        }
-        else if (exitInThisMonth)
-        {
-            activeDaysInMonth = Math.Min(totalMonthDays, s.SgkExitDate!.Value.Day);
-            missingDays = absentDays;
-            paidDays = Math.Max(0, activeDaysInMonth - absentDays);
-        }
-        else
-        {
-            // Tam ay (Önceki dönem veya ay içi giriş/çıkış olmayan dönem):
-            // SGK 2020/20 Genelgesi ve SgkCalculationHelper parmak hesabı kuralları uygulanır.
-            // 31 çeken aylarda 2 ve üzeri devamsızlıkta takvim gününden (31) düşülür (örn: 31 - 5 = 26 gün prim, 5 eksik gün).
-            var sgkRes = MebKoordinatorluk.Core.Services.SgkCalculationHelper.Calculate(
-                year,
-                month,
-                null,
-                null,
-                absentDays);
+        // SGK 2020/20 Genelgesi ve SgkCalculationHelper kuralları:
+        // Ay içi giriş, çıkış veya tam ay parmak hesabı
+        var sgkRes = MebKoordinatorluk.Core.Services.SgkCalculationHelper.Calculate(
+            year,
+            month,
+            calcEntry,
+            calcExit,
+            absentDays);
 
-            paidDays = sgkRes.BildirilecekPrimGunu;
-            missingDays = sgkRes.BildirilecekEksikGun;
-        }
+        int paidDays = sgkRes.BildirilecekPrimGunu;
+        missingDays = sgkRes.BildirilecekEksikGun;
 
         // 4. Hak Edilen Ücret hesabı:
         // Çıkış tarihine kadar (veya girişten itibaren) çalışılan gün sayısına göre Günlük PEK * paidDays olarak hesaplanır.

@@ -20,6 +20,7 @@ public class SettingsView : UserControl
     // Institution Form
     private TextBox _txtValilik = null!;
     private TextBox _txtDistrictMem = null!;
+    private TextBox _txtKurumKodu = null!;
     private TextBox _txtSchoolName = null!;
     private TextBox _txtSchoolAddress = null!;
     private TextBox _txtSchoolCity = null!;
@@ -156,14 +157,16 @@ public class SettingsView : UserControl
         _txtDistrictMem = new TextBox { Location = new Point(430, iy), Width = 380, PlaceholderText = "Örn: İlçe Millî Eğitim Müdürlüğü veya NİKSAR İLÇE MEM" };
         iy += 36;
 
-        // 2. Satır: Okul Adı & İl / İlçe
-        var lblSchool = new Label { Text = "Okul / Kurum Adı", Location = new Point(20, iy), AutoSize = true, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
-        var lblCity = new Label { Text = "İl", Location = new Point(430, iy), AutoSize = true, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
-        var lblDistrict = new Label { Text = "İlçe", Location = new Point(630, iy), AutoSize = true, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
+        // 2. Satır: Kurum Kodu, Okul Adı & İl / İlçe
+        var lblKurumKodu = new Label { Text = "Kurum Kodu", Location = new Point(20, iy), AutoSize = true, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
+        var lblSchool = new Label { Text = "Okul / Kurum Resmi Adı", Location = new Point(165, iy), AutoSize = true, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
+        var lblCity = new Label { Text = "İl", Location = new Point(560, iy), AutoSize = true, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
+        var lblDistrict = new Label { Text = "İlçe", Location = new Point(690, iy), AutoSize = true, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
         iy += 20;
-        _txtSchoolName = new TextBox { Location = new Point(20, iy), Width = 380, PlaceholderText = "Örn: KIRKKIZLAR MESLEKİ VE TEKNİK ANADOLU LİSESİ" };
-        _txtSchoolCity = new TextBox { Location = new Point(430, iy), Width = 180, PlaceholderText = "TOKAT" };
-        _txtSchoolDistrict = new TextBox { Location = new Point(630, iy), Width = 180, PlaceholderText = "NİKSAR" };
+        _txtKurumKodu = new TextBox { Location = new Point(20, iy), Width = 130, PlaceholderText = "Örn: 763421" };
+        _txtSchoolName = new TextBox { Location = new Point(165, iy), Width = 380, PlaceholderText = "Örn: KIRKKIZLAR MESLEKİ VE TEKNİK ANADOLU LİSESİ" };
+        _txtSchoolCity = new TextBox { Location = new Point(560, iy), Width = 115, PlaceholderText = "TOKAT" };
+        _txtSchoolDistrict = new TextBox { Location = new Point(690, iy), Width = 120, PlaceholderText = "NİKSAR" };
         iy += 36;
 
         // 3. Satır: Okul Açık Adresi (Tam Genişlik)
@@ -411,7 +414,7 @@ public class SettingsView : UserControl
         pnlInst.Controls.AddRange([
             pnlInstBanner,
             lblValilik, lblDistrictMem, _txtValilik, _txtDistrictMem,
-            lblSchool, _txtSchoolName,
+            lblKurumKodu, _txtKurumKodu, lblSchool, _txtSchoolName,
             lblCity, lblDistrict, _txtSchoolCity, _txtSchoolDistrict,
             lblAddr, _txtSchoolAddress,
             lblYear, lblTerm, lblSayi, lblDate, _txtAcademicYear, _txtTerm, _txtSayiNo, _txtFormDate,
@@ -615,6 +618,7 @@ public class SettingsView : UserControl
 
         _txtValilik.Text = _settings.DistrictGovernorate;
         _txtDistrictMem.Text = _settings.DistrictMem;
+        _txtKurumKodu.Text = _settings.KurumKodu;
         _txtSchoolName.Text = _settings.SchoolName;
         _txtSchoolAddress.Text = _settings.SchoolAddress;
         _txtSchoolCity.Text = _settings.SchoolCity;
@@ -643,6 +647,7 @@ public class SettingsView : UserControl
     {
         _settings.DistrictGovernorate = _txtValilik.Text.Trim();
         _settings.DistrictMem = _txtDistrictMem.Text.Trim();
+        _settings.KurumKodu = _txtKurumKodu.Text.Trim();
         _settings.SchoolName = _txtSchoolName.Text.Trim();
         _settings.SchoolAddress = _txtSchoolAddress.Text.Trim();
         _settings.SchoolCity = _txtSchoolCity.Text.Trim();

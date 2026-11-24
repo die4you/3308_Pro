@@ -69,6 +69,7 @@ public class SettingRepository : ISettingRepository
                 settings.DistrictMem = parts.Length > 1 ? parts[1] : "İlçe Millî Eğitim Müdürlüğü";
             }
         }
+        if (dict.TryGetValue("KurumKodu", out val) || dict.TryGetValue("SchoolCode", out val)) settings.KurumKodu = val;
         if (dict.TryGetValue("SchoolName", out val)) settings.SchoolName = val;
         if (dict.TryGetValue("SayiNo", out val)) settings.SayiNo = val;
         if (dict.TryGetValue("FormDate", out val)) settings.FormDate = val;
@@ -131,6 +132,7 @@ public class SettingRepository : ISettingRepository
     {
         await SetValueAsync("Valilik", settings.Valilik);
         await SetValueAsync("DistrictMem", settings.DistrictMem);
+        await SetValueAsync("KurumKodu", settings.KurumKodu);
         await SetValueAsync("SchoolName", settings.SchoolName);
         await SetValueAsync("SayiNo", settings.SayiNo);
         await SetValueAsync("FormDate", settings.FormDate);

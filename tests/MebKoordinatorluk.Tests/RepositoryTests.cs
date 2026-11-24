@@ -709,6 +709,23 @@ public class RepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task SettingRepository_KurumKodu_ShouldPersistAndLoadCorrectly()
+    {
+        // Arrange
+        var settingRepo = new SettingRepository(_factory);
+        var settings = await settingRepo.GetAppSettingsAsync();
+
+        // Act
+        settings.KurumKodu = "763421";
+        await settingRepo.SaveAppSettingsAsync(settings);
+
+        // Assert
+        var reloaded = await settingRepo.GetAppSettingsAsync();
+        Assert.Equal("763421", reloaded.KurumKodu);
+        Assert.Equal("763421", reloaded.SchoolCode);
+    }
+
+    [Fact]
     public async Task StudentRepository_DeletePermanentlyAsync_ShouldDeleteStudentAndLinkedRecords()
     {
         // Arrange
