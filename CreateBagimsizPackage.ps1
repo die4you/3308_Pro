@@ -11,7 +11,7 @@ if (-not (Test-Path $distDir)) {
 }
 
 $scDir = Join-Path $distDir "3308_Pro_Bagimsiz_x64"
-$zipPath = Join-Path $distDir "3308_Pro_v2.4_Portable.zip"
+$zipPath = Join-Path $distDir "3308_Pro_v2.9_Portable.zip"
 
 Write-Host "1. 3308 Pro Bağımsız Dağıtım Paketi Derleniyor (Self-Contained x64)..." -ForegroundColor Cyan
 dotnet publish "$root\src\MebKoordinatorluk.UI\MebKoordinatorluk.UI.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -m:1 /p:nodeReuse=false -o $scDir
@@ -69,7 +69,7 @@ Set-Content -Path (Join-Path $scDir "Masaustune_Kisayol_Olustur.bat") -Value $sh
 $scBeniOku = @"
 ========================================================================
     3308 PRO - ISLETMELERDE MESLEKI EGITIM VE KOORDINATORLUK SISTEMI
-    Surum: 2.4 (Bagimsiz / Portable Surum)
+    Surum: 2.9 (Bagimsiz / Portable Surum)
 ========================================================================
 
 Bu paket "Self-Contained" (Kendi Kendine Yeten) olarak hazirlanmistir.
@@ -144,7 +144,7 @@ $issContent = @"
 ; Inno Setup 6 Kurulum Betiği
 
 #define MyAppName "3308 Pro"
-#define MyAppVersion "2.4"
+#define MyAppVersion "2.9"
 #define MyAppPublisher "TRGY CYMZ"
 #define MyAppExeName "3308_Pro.exe"
 
@@ -157,7 +157,7 @@ DefaultDirName=C:\3308_Pro
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=..\
-OutputBaseFilename=3308_Pro_Kurulum_v2.4
+OutputBaseFilename=3308_Pro_Kurulum_v2.9
 SetupIconFile=app.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
@@ -215,7 +215,7 @@ if %ISCC%=="" (
 )
 
 echo Inno Setup bulundu: %ISCC%
-echo 3308_Pro_Kurulum_v2.4.exe derleniyor, lutfen bekleyiniz...
+echo 3308_Pro_Kurulum_v2.9.exe derleniyor, lutfen bekleyiniz...
 echo.
 
 %ISCC% "%~dp03308_Pro_Setup.iss"
@@ -223,7 +223,7 @@ echo.
 if %ERRORLEVEL% EQU 0 (
     echo.
     echo [BASARILI] Kurulum dosyasi hazirlandi:
-    echo Dagitim_Paketi\3308_Pro_Kurulum_v2.4.exe
+    echo Dagitim_Paketi\3308_Pro_Kurulum_v2.9.exe
     echo.
 ) else (
     echo.
@@ -236,7 +236,7 @@ Set-Content -Path (Join-Path $setupDir "Kurulumu_Derle.bat") -Value $compileBat 
 
 $globalBeniOku = @"
 ================================================================================
-       3308 PRO - RESMİ DAĞITIM VE LİSANSLAMA YÖNETİM PAKETİ (v2.4)
+       3308 PRO - RESMİ DAĞITIM VE LİSANSLAMA YÖNETİM PAKETİ (v2.9)
 ================================================================================
 
 Bu klasör, 3308 Pro yazılımının okullara dağıtımı ve lisans takibi için 
@@ -248,12 +248,12 @@ eksiksiz olarak hazırlanmış tüm bileşenleri içerir.
    - Hedef bilgisayara hiçbir şey yüklemeden doğrudan çalışan bağımsız sürümdür.
    - .NET 9 veya harici kütüphane gerektirmez.
 
-2. [3308_Pro_v2.4_Portable.zip]
+2. [3308_Pro_v2.9_Portable.zip]
    - Okullara e-posta, WhatsApp veya USB bellek ile tek parça göndermek için 
      hazırlanmış sıkıştırılmış arşiv dosyasıdır.
 
 3. [Kurulum_Sihirbazi/]
-   - Tek tıkla kurulan "3308_Pro_Kurulum_v2.4.exe" Windows Setup dosyasını üretmek 
+   - Tek tıkla kurulan "3308_Pro_Kurulum_v2.9.exe" Windows Setup dosyasını üretmek 
      için gerekli Inno Setup betiğini ve "Kurulumu_Derle.bat" dosyasını içerir.
    - Bilgisayarınızda Inno Setup kurulu ise "Kurulumu_Derle.bat"a çift tıklamanız 
      Setup.exe dosyasını otomatik üretecektir.

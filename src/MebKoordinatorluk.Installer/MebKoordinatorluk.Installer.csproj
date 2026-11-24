@@ -6,12 +6,12 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>3308_Pro_Kurulum_v2.4</AssemblyName>
+    <AssemblyName>3308_Pro_Kurulum_v2.9</AssemblyName>
     <ApplicationIcon>..\MebKoordinatorluk.UI\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\..\Dagitim_Paketi\3308_Pro_v2.4_Portable.zip">
+    <EmbeddedResource Include="..\..\Dagitim_Paketi\3308_Pro_v2.9_Portable.zip">
       <LogicalName>Payload.zip</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="logo.jpg">
