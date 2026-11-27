@@ -499,6 +499,10 @@ public class DatabaseInitializer
                 new { Key = "MinimumWageYear", Value = curYear.ToString(), Description = "Asgari Ücret Bütçe Yılı", UpdatedDate = now },
                 new { Key = "OrgunStartDate", Value = $"{curYear}-09-09", Description = "Örgün Eğitim Başlangıç Tarihi", UpdatedDate = now },
                 new { Key = "OrgunEndDate", Value = $"{curYear + 1}-06-20", Description = "Örgün Eğitim Bitiş Tarihi", UpdatedDate = now },
+                new { Key = "FirstMidtermStartDate", Value = $"{curYear}-11-10", Description = "1. Ara Tatil Başlangıç Tarihi", UpdatedDate = now },
+                new { Key = "FirstMidtermEndDate", Value = $"{curYear}-11-14", Description = "1. Ara Tatil Bitiş Tarihi", UpdatedDate = now },
+                new { Key = "SecondMidtermStartDate", Value = $"{curYear + 1}-04-12", Description = "2. Ara Tatil Başlangıç Tarihi", UpdatedDate = now },
+                new { Key = "SecondMidtermEndDate", Value = $"{curYear + 1}-04-16", Description = "2. Ara Tatil Bitiş Tarihi", UpdatedDate = now },
                 new { Key = "Username", Value = "admin", Description = "Yönetici Kullanıcı Adı", UpdatedDate = now },
                 new { Key = "Password", Value = "admin123", Description = "Yönetici Şifresi", UpdatedDate = now }
             };

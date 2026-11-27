@@ -87,6 +87,10 @@ public class SettingRepository : ISettingRepository
         if (dict.TryGetValue("MinimumWageYear", out val) && int.TryParse(val, out iVal)) settings.MinimumWageYear = iVal;
         if (dict.TryGetValue("OrgunStartDate", out val)) settings.OrgunStartDate = val;
         if (dict.TryGetValue("OrgunEndDate", out val)) settings.OrgunEndDate = val;
+        if (dict.TryGetValue("FirstMidtermStartDate", out val)) settings.FirstMidtermStartDate = val;
+        if (dict.TryGetValue("FirstMidtermEndDate", out val)) settings.FirstMidtermEndDate = val;
+        if (dict.TryGetValue("SecondMidtermStartDate", out val)) settings.SecondMidtermStartDate = val;
+        if (dict.TryGetValue("SecondMidtermEndDate", out val)) settings.SecondMidtermEndDate = val;
         if (dict.TryGetValue("Username", out val)) settings.Username = val;
         if (dict.TryGetValue("Password", out val)) settings.Password = val;
         if (dict.TryGetValue("LastBackupDate", out val)) settings.LastBackupDate = val;
@@ -150,6 +154,10 @@ public class SettingRepository : ISettingRepository
         await SetValueAsync("MinimumWageYear", settings.MinimumWageYear.ToString());
         await SetValueAsync("OrgunStartDate", settings.OrgunStartDate);
         await SetValueAsync("OrgunEndDate", settings.OrgunEndDate);
+        await SetValueAsync("FirstMidtermStartDate", settings.FirstMidtermStartDate);
+        await SetValueAsync("FirstMidtermEndDate", settings.FirstMidtermEndDate);
+        await SetValueAsync("SecondMidtermStartDate", settings.SecondMidtermStartDate);
+        await SetValueAsync("SecondMidtermEndDate", settings.SecondMidtermEndDate);
         await SetValueAsync("Username", settings.Username);
         await SetValueAsync("Password", settings.Password);
         await SetValueAsync("TeacherCanEditData", settings.TeacherCanEditData.ToString().ToLowerInvariant());

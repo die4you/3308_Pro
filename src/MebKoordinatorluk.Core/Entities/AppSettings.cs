@@ -32,6 +32,34 @@ public class AppSettings
         : (MinimumWage > 0 ? Math.Round(MinimumWage / 0.85m, 2) : 33000.00m);
     public string OrgunStartDate { get; set; } = $"{DateTime.Now.Year}-09-09";
     public string OrgunEndDate { get; set; } = $"{DateTime.Now.Year + 1}-06-20";
+
+    // 1. ve 2. Ara Tatil Tarihleri (MEB Örgün Eğitim)
+    public string FirstMidtermStartDate { get; set; } = $"{DateTime.Now.Year}-11-10";
+    public string FirstMidtermEndDate { get; set; } = $"{DateTime.Now.Year}-11-14";
+    public string SecondMidtermStartDate { get; set; } = $"{DateTime.Now.Year + 1}-04-12";
+    public string SecondMidtermEndDate { get; set; } = $"{DateTime.Now.Year + 1}-04-16";
+
+    /// <summary>
+    /// Verilen tarih aralığının (örn. bir hafta veya geçiş günleri) 1. veya 2. ara tatil ile çakışıp çakışmadığını kontrol eder.
+    /// </summary>
+    public bool OverlapsWithMidtermBreak(DateTime rangeStart, DateTime rangeEnd)
+    {
+        if (DateTime.TryParse(FirstMidtermStartDate, out var m1Start) &&
+            DateTime.TryParse(FirstMidtermEndDate, out var m1End))
+        {
+            if (rangeStart.Date <= m1End.Date && rangeEnd.Date >= m1Start.Date)
+                return true;
+        }
+
+        if (DateTime.TryParse(SecondMidtermStartDate, out var m2Start) &&
+            DateTime.TryParse(SecondMidtermEndDate, out var m2End))
+        {
+            if (rangeStart.Date <= m2End.Date && rangeEnd.Date >= m2Start.Date)
+                return true;
+        }
+
+        return false;
+    }
     public string Username { get; set; } = "admin";
     public string Password { get; set; } = "admin123";
     public string? LastBackupDate { get; set; }

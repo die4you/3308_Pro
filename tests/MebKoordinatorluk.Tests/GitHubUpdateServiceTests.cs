@@ -23,6 +23,8 @@ public class GitHubUpdateServiceTests
     [InlineData("2.8.0", "v2.8.1", true)]
     [InlineData("2.9.0", "v2.9.0", false)]
     [InlineData("2.9.0", "v2.9.1", true)]
+    [InlineData("3.0.0", "v3.0.0", false)]
+    [InlineData("3.0.0", "v3.0.1", true)]
     public void VersionComparison_ShouldCorrectlyDetectUpdate(string current, string remote, bool expectedUpdateAvailable)
     {
         var currentVer = GitHubUpdateService.ParseVersion(current);

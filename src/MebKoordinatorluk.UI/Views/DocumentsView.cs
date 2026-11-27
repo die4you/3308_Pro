@@ -480,6 +480,45 @@ public class DocumentsView : UserControl
         return (startGrp, endGrp);
     }
 
+    private bool IsWeekInMidtermBreak(AttendanceWeekGroup? grp)
+    {
+        if (grp == null || _settings == null) return false;
+        int startDay = grp.StartWorkDay > 0 ? grp.StartWorkDay : grp.StartDay;
+        int endDay = grp.EndWorkDay > 0 ? grp.EndWorkDay : grp.EndDay;
+        if (startDay <= 0 || endDay <= 0) return false;
+
+        var weekStart = new DateTime(_selectedMonth.Year, _selectedMonth.Month, startDay);
+        var weekEnd = new DateTime(_selectedMonth.Year, _selectedMonth.Month, endDay);
+        return _settings.OverlapsWithMidtermBreak(weekStart, weekEnd);
+    }
+
+    private static DataGridViewTextBoxCell CreateExemptCell(string tooltip)
+    {
+        return new DataGridViewTextBoxCell
+        {
+            Value = "—",
+            ToolTipText = tooltip,
+            Style = new DataGridViewCellStyle
+            {
+                Alignment = DataGridViewContentAlignment.MiddleCenter,
+                ForeColor = Color.FromArgb(148, 163, 184),
+                BackColor = Color.FromArgb(241, 245, 249),
+                Font = new Font("Segoe UI", 9f, FontStyle.Regular)
+            }
+        };
+    }
+
+    private static bool GetCellBoolValue(DataGridViewCell cell)
+    {
+        if (cell is DataGridViewCheckBoxCell && cell.Value != null)
+        {
+            if (cell.Value is bool b) return b;
+            if (bool.TryParse(cell.Value.ToString(), out var parsed)) return parsed;
+            if (int.TryParse(cell.Value.ToString(), out var iVal)) return iVal == 1;
+        }
+        return false;
+    }
+
     private static string FormatHeaderWithLineBreak(string title)
     {
         int parenIdx = title.IndexOf('(');
@@ -736,6 +775,13 @@ public class DocumentsView : UserControl
         bool hasTransStart = !string.IsNullOrEmpty(transStart);
         bool hasTransEnd = !string.IsNullOrEmpty(transEnd);
 
+        var groups = AttendanceWeekHelper.GetMonthWeekGroups(_selectedMonth.Year, _selectedMonth.Month);
+        var regularWeeks = groups.Where(g => !g.IsTransition).ToList();
+        AttendanceWeekGroup? w1Grp = regularWeeks.Count > 0 ? regularWeeks[0] : null;
+        AttendanceWeekGroup? w2Grp = regularWeeks.Count > 1 ? regularWeeks[1] : null;
+        AttendanceWeekGroup? w3Grp = regularWeeks.Count > 2 ? regularWeeks[2] : null;
+        AttendanceWeekGroup? w4Grp = regularWeeks.Count > 3 ? regularWeeks[3] : null;
+
         int completedCount = 0;
         int totalExpectedDocs = 0;
         int deliveredDocs = 0;
@@ -761,26 +807,41 @@ public class DocumentsView : UserControl
             if (!string.IsNullOrWhiteSpace(selectedTeacher) && !t.FullName.Equals(selectedTeacher, StringComparison.OrdinalIgnoreCase))
                 continue;
 
+            // MESEM ve ara tatil tespiti: MESEM öğrencileri ara tatilde de işletmeye devam eder
+            bool isMesemPair = p.Students.Any(s => FeeCalculator.IsMesem(s, null));
+            bool isTransStartBreak = !isMesemPair && hasTransStart && IsWeekInMidtermBreak(startGrp);
+            bool isW1Break = !isMesemPair && IsWeekInMidtermBreak(w1Grp);
+            bool isW2Break = !isMesemPair && IsWeekInMidtermBreak(w2Grp);
+            bool isW3Break = !isMesemPair && IsWeekInMidtermBreak(w3Grp);
+            bool isW4Break = !isMesemPair && IsWeekInMidtermBreak(w4Grp);
+            bool isTransEndBreak = !isMesemPair && hasTransEnd && IsWeekInMidtermBreak(endGrp);
+
             // Görev formundaki ziyaret tarihlerine göre geçiş haftasında görev kontrolü
             var visitDates = CoordinatorDocsView.GetMonthlyVisitDates(ent, t, p.Students, _selectedMonth);
 
-            bool hasDutyTransStart = hasTransStart && startGrp != null &&
+            bool hasDutyTransStart = hasTransStart && startGrp != null && !isTransStartBreak &&
                 visitDates.Any(d => d.Day >= startGrp.StartDay && d.Day <= startGrp.EndDay);
 
-            bool hasDutyTransEnd = hasTransEnd && endGrp != null &&
+            bool hasDutyTransEnd = hasTransEnd && endGrp != null && !isTransEndBreak &&
                 visitDates.Any(d => d.Day >= endGrp.StartDay && d.Day <= endGrp.EndDay);
 
             var rec = _currentMonthRecords.FirstOrDefault(r => r.TeacherId == t.Id && r.EnterpriseId == ent.Id);
             bool transS = hasDutyTransStart && (rec?.TransitionStartDelivered ?? false);
-            bool w1 = rec?.Week1Delivered ?? false;
-            bool w2 = rec?.Week2Delivered ?? false;
-            bool w3 = rec?.Week3Delivered ?? false;
-            bool w4 = rec?.Week4Delivered ?? false;
+            bool w1 = !isW1Break && (rec?.Week1Delivered ?? false);
+            bool w2 = !isW2Break && (rec?.Week2Delivered ?? false);
+            bool w3 = !isW3Break && (rec?.Week3Delivered ?? false);
+            bool w4 = !isW4Break && (rec?.Week4Delivered ?? false);
             bool transE = hasDutyTransEnd && (rec?.TransitionEndDelivered ?? false);
             bool monthly = rec?.MonthlyReportDelivered ?? false;
             bool att = rec?.AttendanceSheetDelivered ?? false;
 
-            int pairExpected = 6 + (hasDutyTransStart ? 1 : 0) + (hasDutyTransEnd ? 1 : 0);
+            int pairExpected = (hasDutyTransStart ? 1 : 0)
+                             + (!isW1Break ? 1 : 0)
+                             + (!isW2Break ? 1 : 0)
+                             + (!isW3Break ? 1 : 0)
+                             + (!isW4Break ? 1 : 0)
+                             + (hasDutyTransEnd ? 1 : 0)
+                             + 2;
             totalExpectedDocs += pairExpected;
 
             int docSum = (hasDutyTransStart && transS ? 1 : 0) +
@@ -789,7 +850,7 @@ public class DocumentsView : UserControl
                          (monthly ? 1 : 0) + (att ? 1 : 0);
 
             deliveredDocs += docSum;
-            bool isComplete = (docSum == pairExpected);
+            bool isComplete = (pairExpected > 0 && docSum == pairExpected);
             if (isComplete) completedCount++;
 
             if (statusIdx == 1 && isComplete) continue; // Only pending
@@ -815,39 +876,55 @@ public class DocumentsView : UserControl
             addedRow.Cells["colStatus"].Style.ForeColor = statusColor;
             addedRow.Cells["colStatus"].Style.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
 
-            // Geçiş günlerinde görev yoksa hücreyi pasifleştir (— ve kilitli)
-            if (hasTransStart && !hasDutyTransStart && _grid.Columns.Contains("colTransitionStart"))
+            // Geçiş günlerinde görev yoksa veya ara tatil ise hücreyi pasifleştir (— ve kilitli)
+            if (hasTransStart && _grid.Columns.Contains("colTransitionStart"))
             {
-                addedRow.Cells["colTransitionStart"] = new DataGridViewTextBoxCell
+                if (isTransStartBreak)
                 {
-                    Value = "—",
-                    ToolTipText = "Bu geçiş günlerinde planlanmış koordinatörlük görevi bulunmamaktadır (Muaf)",
-                    Style = new DataGridViewCellStyle
-                    {
-                        Alignment = DataGridViewContentAlignment.MiddleCenter,
-                        ForeColor = Color.FromArgb(148, 163, 184),
-                        BackColor = Color.FromArgb(241, 245, 249),
-                        Font = new Font("Segoe UI", 9f, FontStyle.Regular)
-                    }
-                };
-                addedRow.Cells["colTransitionStart"].ReadOnly = true;
+                    addedRow.Cells["colTransitionStart"] = CreateExemptCell("Ara tatil nedeniyle koordinatörlük görevi bulunmamaktadır (Muaf)");
+                    addedRow.Cells["colTransitionStart"].ReadOnly = true;
+                }
+                else if (!hasDutyTransStart)
+                {
+                    addedRow.Cells["colTransitionStart"] = CreateExemptCell("Bu geçiş günlerinde planlanmış koordinatörlük görevi bulunmamaktadır (Muaf)");
+                    addedRow.Cells["colTransitionStart"].ReadOnly = true;
+                }
             }
 
-            if (hasTransEnd && !hasDutyTransEnd && _grid.Columns.Contains("colTransitionEnd"))
+            // Ara tatildeki haftaları pasifleştir (— ve kilitli)
+            if (isW1Break && _grid.Columns.Contains("colW1"))
             {
-                addedRow.Cells["colTransitionEnd"] = new DataGridViewTextBoxCell
+                addedRow.Cells["colW1"] = CreateExemptCell("Ara tatil nedeniyle koordinatörlük görevi bulunmamaktadır (Muaf)");
+                addedRow.Cells["colW1"].ReadOnly = true;
+            }
+            if (isW2Break && _grid.Columns.Contains("colW2"))
+            {
+                addedRow.Cells["colW2"] = CreateExemptCell("Ara tatil nedeniyle koordinatörlük görevi bulunmamaktadır (Muaf)");
+                addedRow.Cells["colW2"].ReadOnly = true;
+            }
+            if (isW3Break && _grid.Columns.Contains("colW3"))
+            {
+                addedRow.Cells["colW3"] = CreateExemptCell("Ara tatil nedeniyle koordinatörlük görevi bulunmamaktadır (Muaf)");
+                addedRow.Cells["colW3"].ReadOnly = true;
+            }
+            if (isW4Break && _grid.Columns.Contains("colW4"))
+            {
+                addedRow.Cells["colW4"] = CreateExemptCell("Ara tatil nedeniyle koordinatörlük görevi bulunmamaktadır (Muaf)");
+                addedRow.Cells["colW4"].ReadOnly = true;
+            }
+
+            if (hasTransEnd && _grid.Columns.Contains("colTransitionEnd"))
+            {
+                if (isTransEndBreak)
                 {
-                    Value = "—",
-                    ToolTipText = "Bu geçiş günlerinde planlanmış koordinatörlük görevi bulunmamaktadır (Muaf)",
-                    Style = new DataGridViewCellStyle
-                    {
-                        Alignment = DataGridViewContentAlignment.MiddleCenter,
-                        ForeColor = Color.FromArgb(148, 163, 184),
-                        BackColor = Color.FromArgb(241, 245, 249),
-                        Font = new Font("Segoe UI", 9f, FontStyle.Regular)
-                    }
-                };
-                addedRow.Cells["colTransitionEnd"].ReadOnly = true;
+                    addedRow.Cells["colTransitionEnd"] = CreateExemptCell("Ara tatil nedeniyle koordinatörlük görevi bulunmamaktadır (Muaf)");
+                    addedRow.Cells["colTransitionEnd"].ReadOnly = true;
+                }
+                else if (!hasDutyTransEnd)
+                {
+                    addedRow.Cells["colTransitionEnd"] = CreateExemptCell("Bu geçiş günlerinde planlanmış koordinatörlük görevi bulunmamaktadır (Muaf)");
+                    addedRow.Cells["colTransitionEnd"].ReadOnly = true;
+                }
             }
         }
 
@@ -902,24 +979,33 @@ public class DocumentsView : UserControl
         bool hasTransStart = !string.IsNullOrEmpty(transStart);
         bool hasTransEnd = !string.IsNullOrEmpty(transEnd);
 
-        rec.TransitionStartDelivered = hasTransStart && hasDutyTransStart && Convert.ToBoolean(row.Cells["colTransitionStart"].Value);
-        rec.Week1Delivered = Convert.ToBoolean(row.Cells["colW1"].Value);
-        rec.Week2Delivered = Convert.ToBoolean(row.Cells["colW2"].Value);
-        rec.Week3Delivered = Convert.ToBoolean(row.Cells["colW3"].Value);
-        rec.Week4Delivered = Convert.ToBoolean(row.Cells["colW4"].Value);
-        rec.TransitionEndDelivered = hasTransEnd && hasDutyTransEnd && Convert.ToBoolean(row.Cells["colTransitionEnd"].Value);
-        rec.MonthlyReportDelivered = Convert.ToBoolean(row.Cells["colReport"].Value);
-        rec.AttendanceSheetDelivered = Convert.ToBoolean(row.Cells["colAttendance"].Value);
+        rec.TransitionStartDelivered = hasTransStart && hasDutyTransStart && GetCellBoolValue(row.Cells["colTransitionStart"]);
+        rec.Week1Delivered = GetCellBoolValue(row.Cells["colW1"]);
+        rec.Week2Delivered = GetCellBoolValue(row.Cells["colW2"]);
+        rec.Week3Delivered = GetCellBoolValue(row.Cells["colW3"]);
+        rec.Week4Delivered = GetCellBoolValue(row.Cells["colW4"]);
+        rec.TransitionEndDelivered = hasTransEnd && hasDutyTransEnd && GetCellBoolValue(row.Cells["colTransitionEnd"]);
+        rec.MonthlyReportDelivered = GetCellBoolValue(row.Cells["colReport"]);
+        rec.AttendanceSheetDelivered = GetCellBoolValue(row.Cells["colAttendance"]);
 
-        int pairExpected = 6 + (hasDutyTransStart ? 1 : 0) + (hasDutyTransEnd ? 1 : 0);
+        // Canlı durum hücresini aktif checkbox hücrelerine göre dinamik güncelle
+        string[] docCols = ["colTransitionStart", "colW1", "colW2", "colW3", "colW4", "colTransitionEnd", "colReport", "colAttendance"];
+        int pairExpected = 0;
+        int docSum = 0;
+        foreach (var cName in docCols)
+        {
+            if (_grid.Columns.Contains(cName) && _grid.Columns[cName].Visible)
+            {
+                var c = row.Cells[cName];
+                if (c is DataGridViewCheckBoxCell)
+                {
+                    pairExpected++;
+                    if (GetCellBoolValue(c)) docSum++;
+                }
+            }
+        }
 
-        // Canlı durum hücresini güncelle
-        int docSum = (hasDutyTransStart && rec.TransitionStartDelivered ? 1 : 0) +
-                     (rec.Week1Delivered ? 1 : 0) + (rec.Week2Delivered ? 1 : 0) + (rec.Week3Delivered ? 1 : 0) + (rec.Week4Delivered ? 1 : 0) +
-                     (hasDutyTransEnd && rec.TransitionEndDelivered ? 1 : 0) +
-                     (rec.MonthlyReportDelivered ? 1 : 0) + (rec.AttendanceSheetDelivered ? 1 : 0);
-
-        bool isComplete = (docSum == pairExpected);
+        bool isComplete = (pairExpected > 0 && docSum == pairExpected);
         row.Cells["colStatus"].Value = isComplete ? "✓ Tamamlandı" : $"⚠️ {pairExpected - docSum} Eksik";
         row.Cells["colStatus"].Style.ForeColor = isComplete ? Color.FromArgb(22, 101, 52) : Color.FromArgb(217, 119, 6);
 
@@ -933,32 +1019,29 @@ public class DocumentsView : UserControl
         int completedCount = 0;
         int deliveredDocs = 0;
         int totalExpectedDocs = 0;
+        string[] docCols = ["colTransitionStart", "colW1", "colW2", "colW3", "colW4", "colTransitionEnd", "colReport", "colAttendance"];
 
         foreach (DataGridViewRow r in _grid.Rows)
         {
-            bool hasDutyTransStart = false;
-            bool hasDutyTransEnd = false;
-            if (r.Tag is ValueTuple<int, int, DocumentTrackingRecord?, bool, bool> tag)
+            int pairExpected = 0;
+            int dCount = 0;
+
+            foreach (var cName in docCols)
             {
-                hasDutyTransStart = tag.Item4;
-                hasDutyTransEnd = tag.Item5;
+                if (_grid.Columns.Contains(cName) && _grid.Columns[cName].Visible)
+                {
+                    var c = r.Cells[cName];
+                    if (c is DataGridViewCheckBoxCell)
+                    {
+                        pairExpected++;
+                        if (GetCellBoolValue(c)) dCount++;
+                    }
+                }
             }
 
-            int pairExpected = 6 + (hasDutyTransStart ? 1 : 0) + (hasDutyTransEnd ? 1 : 0);
             totalExpectedDocs += pairExpected;
-
-            int dCount = 0;
-            if (hasDutyTransStart && Convert.ToBoolean(r.Cells["colTransitionStart"].Value)) dCount++;
-            if (Convert.ToBoolean(r.Cells["colW1"].Value)) dCount++;
-            if (Convert.ToBoolean(r.Cells["colW2"].Value)) dCount++;
-            if (Convert.ToBoolean(r.Cells["colW3"].Value)) dCount++;
-            if (Convert.ToBoolean(r.Cells["colW4"].Value)) dCount++;
-            if (hasDutyTransEnd && Convert.ToBoolean(r.Cells["colTransitionEnd"].Value)) dCount++;
-            if (Convert.ToBoolean(r.Cells["colReport"].Value)) dCount++;
-            if (Convert.ToBoolean(r.Cells["colAttendance"].Value)) dCount++;
-
             deliveredDocs += dCount;
-            if (dCount == pairExpected) completedCount++;
+            if (pairExpected > 0 && dCount == pairExpected) completedCount++;
         }
 
         int rate = totalExpectedDocs > 0 ? (int)Math.Round((double)deliveredDocs / totalExpectedDocs * 100) : 0;
@@ -968,6 +1051,8 @@ public class DocumentsView : UserControl
 
     private async void SetAllDocsState(bool state)
     {
+        string[] docCols = ["colTransitionStart", "colW1", "colW2", "colW3", "colW4", "colTransitionEnd", "colReport", "colAttendance"];
+
         foreach (DataGridViewRow row in _grid.Rows)
         {
             if (row.Tag is not ValueTuple<int, int, DocumentTrackingRecord?, bool, bool> tag) continue;
@@ -990,33 +1075,63 @@ public class DocumentsView : UserControl
                 row.Tag = (teacherId, enterpriseId, rec, hasDutyTransStart, hasDutyTransEnd);
             }
 
-            rec.TransitionStartDelivered = hasDutyTransStart && state;
-            rec.Week1Delivered = state;
-            rec.Week2Delivered = state;
-            rec.Week3Delivered = state;
-            rec.Week4Delivered = state;
-            rec.TransitionEndDelivered = hasDutyTransEnd && state;
-            rec.MonthlyReportDelivered = state;
-            rec.AttendanceSheetDelivered = state;
-
             if (hasDutyTransStart && _grid.Columns.Contains("colTransitionStart") && row.Cells["colTransitionStart"] is DataGridViewCheckBoxCell)
+            {
                 row.Cells["colTransitionStart"].Value = state;
-            row.Cells["colW1"].Value = state;
-            row.Cells["colW2"].Value = state;
-            row.Cells["colW3"].Value = state;
-            row.Cells["colW4"].Value = state;
+                rec.TransitionStartDelivered = state;
+            }
+            if (row.Cells["colW1"] is DataGridViewCheckBoxCell)
+            {
+                row.Cells["colW1"].Value = state;
+                rec.Week1Delivered = state;
+            }
+            if (row.Cells["colW2"] is DataGridViewCheckBoxCell)
+            {
+                row.Cells["colW2"].Value = state;
+                rec.Week2Delivered = state;
+            }
+            if (row.Cells["colW3"] is DataGridViewCheckBoxCell)
+            {
+                row.Cells["colW3"].Value = state;
+                rec.Week3Delivered = state;
+            }
+            if (row.Cells["colW4"] is DataGridViewCheckBoxCell)
+            {
+                row.Cells["colW4"].Value = state;
+                rec.Week4Delivered = state;
+            }
             if (hasDutyTransEnd && _grid.Columns.Contains("colTransitionEnd") && row.Cells["colTransitionEnd"] is DataGridViewCheckBoxCell)
+            {
                 row.Cells["colTransitionEnd"].Value = state;
-            row.Cells["colReport"].Value = state;
-            row.Cells["colAttendance"].Value = state;
+                rec.TransitionEndDelivered = state;
+            }
+            if (row.Cells["colReport"] is DataGridViewCheckBoxCell)
+            {
+                row.Cells["colReport"].Value = state;
+                rec.MonthlyReportDelivered = state;
+            }
+            if (row.Cells["colAttendance"] is DataGridViewCheckBoxCell)
+            {
+                row.Cells["colAttendance"].Value = state;
+                rec.AttendanceSheetDelivered = state;
+            }
 
-            int pairExpected = 6 + (hasDutyTransStart ? 1 : 0) + (hasDutyTransEnd ? 1 : 0);
-            int docSum = (hasDutyTransStart && state ? 1 : 0) +
-                         (state ? 4 : 0) +
-                         (hasDutyTransEnd && state ? 1 : 0) +
-                         (state ? 2 : 0);
+            int pairExpected = 0;
+            int docSum = 0;
+            foreach (var cName in docCols)
+            {
+                if (_grid.Columns.Contains(cName) && _grid.Columns[cName].Visible)
+                {
+                    var c = row.Cells[cName];
+                    if (c is DataGridViewCheckBoxCell)
+                    {
+                        pairExpected++;
+                        if (GetCellBoolValue(c)) docSum++;
+                    }
+                }
+            }
 
-            bool isComplete = (docSum == pairExpected);
+            bool isComplete = (pairExpected > 0 && docSum == pairExpected);
             row.Cells["colStatus"].Value = isComplete ? "✓ Tamamlandı" : $"⚠️ {pairExpected - docSum} Eksik";
             row.Cells["colStatus"].Style.ForeColor = isComplete ? Color.FromArgb(22, 101, 52) : Color.FromArgb(217, 119, 6);
 
@@ -1335,10 +1450,14 @@ public class DocumentsView : UserControl
                     var val = row.Cells["colTransitionStart"].Value?.ToString();
                     rowValues.Add(val == "—" ? "\"Muaf (—)\"" : (val ?? "False"));
                 }
-                rowValues.Add(row.Cells["colW1"].Value?.ToString() ?? "False");
-                rowValues.Add(row.Cells["colW2"].Value?.ToString() ?? "False");
-                rowValues.Add(row.Cells["colW3"].Value?.ToString() ?? "False");
-                rowValues.Add(row.Cells["colW4"].Value?.ToString() ?? "False");
+                var valW1 = row.Cells["colW1"].Value?.ToString();
+                rowValues.Add(valW1 == "—" ? "\"Muaf (—)\"" : (valW1 ?? "False"));
+                var valW2 = row.Cells["colW2"].Value?.ToString();
+                rowValues.Add(valW2 == "—" ? "\"Muaf (—)\"" : (valW2 ?? "False"));
+                var valW3 = row.Cells["colW3"].Value?.ToString();
+                rowValues.Add(valW3 == "—" ? "\"Muaf (—)\"" : (valW3 ?? "False"));
+                var valW4 = row.Cells["colW4"].Value?.ToString();
+                rowValues.Add(valW4 == "—" ? "\"Muaf (—)\"" : (valW4 ?? "False"));
                 if (hasTransEnd)
                 {
                     var val = row.Cells["colTransitionEnd"].Value?.ToString();

@@ -39,6 +39,10 @@ public class SettingsView : UserControl
     private TextBox _txtGrossMinimumWage = null!;
     private DateTimePicker _dtpOrgunStart = null!;
     private DateTimePicker _dtpOrgunEnd = null!;
+    private DateTimePicker _dtpMidterm1Start = null!;
+    private DateTimePicker _dtpMidterm1End = null!;
+    private DateTimePicker _dtpMidterm2Start = null!;
+    private DateTimePicker _dtpMidterm2End = null!;
 
     // Yıl Bazlı Asgari Ücret Kontrolleri
     private NumericUpDown _numWageYear = null!;
@@ -225,6 +229,18 @@ public class SettingsView : UserControl
         _numMaxHours = new NumericUpDown { Location = new Point(20, iy), Width = 240, Minimum = 1, Maximum = 40, Value = 16 };
         _dtpOrgunStart = new DateTimePicker { Location = new Point(280, iy), Width = 240, Format = DateTimePickerFormat.Short, Enabled = true };
         _dtpOrgunEnd = new DateTimePicker { Location = new Point(540, iy), Width = 270, Format = DateTimePickerFormat.Short, Enabled = true };
+        iy += 38;
+
+        // 1. ve 2. Ara Tatil Tarihleri (Örgün Eğitim)
+        var lblMidterm1Start = new Label { Text = "1. Ara Tatil Başlangıç", Location = new Point(20, iy), AutoSize = true, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
+        var lblMidterm1End = new Label { Text = "1. Ara Tatil Bitiş", Location = new Point(220, iy), AutoSize = true, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
+        var lblMidterm2Start = new Label { Text = "2. Ara Tatil Başlangıç", Location = new Point(430, iy), AutoSize = true, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
+        var lblMidterm2End = new Label { Text = "2. Ara Tatil Bitiş", Location = new Point(630, iy), AutoSize = true, Font = new Font("Segoe UI", 8.5f, FontStyle.Bold) };
+        iy += 20;
+        _dtpMidterm1Start = new DateTimePicker { Location = new Point(20, iy), Width = 185, Format = DateTimePickerFormat.Short, Enabled = true };
+        _dtpMidterm1End = new DateTimePicker { Location = new Point(220, iy), Width = 185, Format = DateTimePickerFormat.Short, Enabled = true };
+        _dtpMidterm2Start = new DateTimePicker { Location = new Point(430, iy), Width = 185, Format = DateTimePickerFormat.Short, Enabled = true };
+        _dtpMidterm2End = new DateTimePicker { Location = new Point(630, iy), Width = 180, Format = DateTimePickerFormat.Short, Enabled = true };
         iy += 38;
 
         // Yıl Bazlı Asgari Ücret ve SGK PEK Tanımları Paneli
@@ -422,6 +438,8 @@ public class SettingsView : UserControl
             lblVice, lblPrinc, _txtVicePrincipal, _txtPrincipal,
             lblBodyTitle, _txtFormBody,
             lblHours, lblOrgunStart, lblOrgunEnd, _numMaxHours, _dtpOrgunStart, _dtpOrgunEnd,
+            lblMidterm1Start, lblMidterm1End, lblMidterm2Start, lblMidterm2End,
+            _dtpMidterm1Start, _dtpMidterm1End, _dtpMidterm2Start, _dtpMidterm2End,
             grpWages,
             _txtMinimumWage, _txtGrossMinimumWage,
             btnSaveInst
@@ -640,6 +658,11 @@ public class SettingsView : UserControl
         if (DateTime.TryParse(_settings.OrgunStartDate, out var sDate)) _dtpOrgunStart.Value = sDate;
         if (DateTime.TryParse(_settings.OrgunEndDate, out var eDate)) _dtpOrgunEnd.Value = eDate;
 
+        if (DateTime.TryParse(_settings.FirstMidtermStartDate, out var m1Start)) _dtpMidterm1Start.Value = m1Start;
+        if (DateTime.TryParse(_settings.FirstMidtermEndDate, out var m1End)) _dtpMidterm1End.Value = m1End;
+        if (DateTime.TryParse(_settings.SecondMidtermStartDate, out var m2Start)) _dtpMidterm2Start.Value = m2Start;
+        if (DateTime.TryParse(_settings.SecondMidtermEndDate, out var m2End)) _dtpMidterm2End.Value = m2End;
+
         await LoadYearlyWagesAsync();
     }
 
@@ -672,6 +695,11 @@ public class SettingsView : UserControl
 
         _settings.OrgunStartDate = _dtpOrgunStart.Value.ToString("yyyy-MM-dd");
         _settings.OrgunEndDate = _dtpOrgunEnd.Value.ToString("yyyy-MM-dd");
+
+        _settings.FirstMidtermStartDate = _dtpMidterm1Start.Value.ToString("yyyy-MM-dd");
+        _settings.FirstMidtermEndDate = _dtpMidterm1End.Value.ToString("yyyy-MM-dd");
+        _settings.SecondMidtermStartDate = _dtpMidterm2Start.Value.ToString("yyyy-MM-dd");
+        _settings.SecondMidtermEndDate = _dtpMidterm2End.Value.ToString("yyyy-MM-dd");
 
         await _settingRepo.SaveAppSettingsAsync(_settings);
         MessageBox.Show("Kurum ve dönem ayarları başarıyla kaydedildi.", "Başarılı", MessageBoxButtons.OK, MessageBoxIcon.Information);

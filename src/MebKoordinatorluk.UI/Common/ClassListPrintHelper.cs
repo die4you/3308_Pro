@@ -92,8 +92,8 @@ public static class ClassListPrintHelper
             using var brushAltRow = new SolidBrush(Color.FromArgb(248, 250, 252));
             using var brushText = new SolidBrush(Color.FromArgb(15, 23, 42));
 
-            var formatCenter = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-            var formatLeft = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center };
+            var formatCenter = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter };
+            var formatLeft = new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center, Trimming = StringTrimming.EllipsisCharacter };
 
             if (groupIndex >= classGroups.Count)
             {
@@ -146,7 +146,7 @@ public static class ClassListPrintHelper
             currentY += tableHeaderHeight;
 
             // 3. Draw Table Rows
-            int rowHeight = 22;
+            int rowHeight = options.ShowParentContact ? 30 : 22;
             int rowIndex = 0;
 
             while (studentIndexInGroup < currentGroup.Students.Count)
@@ -250,8 +250,16 @@ public static class ClassListPrintHelper
 
     private static string FormatParentContact(Student s)
     {
-        var parts = new[] { s.ParentName, s.ParentPhone }.Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
-        return parts.Count > 0 ? string.Join(" - ", parts) : "-";
+        bool hasName = !string.IsNullOrWhiteSpace(s.ParentName);
+        bool hasPhone = !string.IsNullOrWhiteSpace(s.ParentPhone);
+
+        if (hasName && hasPhone)
+        {
+            return $"{s.ParentName.Trim()}\n{s.ParentPhone.Trim()}";
+        }
+        if (hasName) return s.ParentName.Trim();
+        if (hasPhone) return s.ParentPhone.Trim();
+        return "-";
     }
 
     private class ColumnDef
@@ -300,7 +308,7 @@ public static class ClassListPrintHelper
 
         if (opts.ShowParentContact)
         {
-            cols.Add(new ColumnDef { Key = "parent", Title = "Veli (Ad & Tel)", Width = 130, AlignLeft = true });
+            cols.Add(new ColumnDef { Key = "parent", Title = "Veli (Ad & Tel)", Width = 145, AlignLeft = true });
         }
 
         if (opts.ShowSignatureColumn)

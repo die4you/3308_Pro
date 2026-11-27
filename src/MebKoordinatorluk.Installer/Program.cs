@@ -41,7 +41,7 @@ public class InstallerForm : Form
 
     private void InitializeComponent()
     {
-        Text = "3308 Pro - Kurulum Sihirbazı v2.9";
+        Text = "3308 Pro - Kurulum Sihirbazı v3.0";
         ClientSize = new Size(640, 520);
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -77,7 +77,7 @@ public class InstallerForm : Form
 
         var lblSub = new Label
         {
-            Text = "İşletmelerde Beceri Eğitimi ve Koordinatörlük Sistemi (Sürüm 2.9)",
+            Text = "İşletmelerde Beceri Eğitimi ve Koordinatörlük Sistemi (Sürüm 3.0)",
             Font = new Font("Segoe UI", 9f),
             ForeColor = Color.FromArgb(191, 219, 254),
             Location = new Point(25, 52),
@@ -478,7 +478,7 @@ pause
             if (key != null)
             {
                 key.SetValue("DisplayName", "3308 Pro - MEB Koordinatörlük Sistemi");
-                key.SetValue("DisplayVersion", "2.9");
+                key.SetValue("DisplayVersion", "3.0");
                 key.SetValue("Publisher", "TRGY CYMZ");
                 key.SetValue("DisplayIcon", iconPath);
                 key.SetValue("UninstallString", $"\"{uninstPath}\"");
